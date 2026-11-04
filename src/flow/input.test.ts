@@ -11,6 +11,9 @@ describe('input actions', () => {
 
   test('S opens the menu, the arrows move and change values, Enter and Escape go back', () => {
     expect(keyAction('KeyS')).toBe('settings');
+    expect(keyAction('KeyC')).toBe('control');
+    expect(keyAction('KeyW')).toBe('walk-in');
+    expect(keyAction('KeyO')).toBe('order');
     expect(keyAction('ArrowUp')).toBe('up');
     expect(keyAction('ArrowDown')).toBe('down');
     expect(keyAction('ArrowLeft')).toBe('decrease');

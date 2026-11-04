@@ -5,7 +5,7 @@ import {describe, expect, test} from 'bun:test';
 
 import type {Arrivals, MixOrderArrival} from './arrivals';
 import {drawArrivals} from './arrivals';
-import {compare, runScenario} from './engine';
+import {autoplay, compare, runScenario} from './engine';
 import type {TinSize} from './params';
 import {DEFAULT_PARAMS, withParams} from './params';
 import type {TimelineEvent} from './timeline';
@@ -145,4 +145,35 @@ test('the simulation imports nothing but itself', () => {
     for (const [, specifier] of source.matchAll(/from\s+'([^']+)'/g)) expect(specifier).toMatch(/^\.\/[\w-]+$/);
     expect(source).not.toMatch(/\b(document|window|HTMLCanvasElement|CanvasRenderingContext2D)\b/);
   }
+});
+
+describe('decision policy', () => {
+  const one = {...DEFAULT_PARAMS, staff: 1};
+  // One member of staff is busy until a walk-in and a mix order are both waiting, so the pick matters.
+  const arrivals: Arrivals = {
+    walkIns: [
+      {id: 1, at: 0},
+      {id: 2, at: 1},
+    ],
+    mixOrders: [order(1, 2, 2)],
+  };
+
+  test('autoplay serves whoever has waited longest and is the default policy', () => {
+    expect(runScenario('today', arrivals, one)).toEqual(runScenario('today', arrivals, one, autoplay));
+    const served = ofType(runScenario('today', arrivals, one).timeline, 'walk-in-served');
+    expect(served.map(e => e.walkIn)).toEqual([1, 2]);
+  });
+
+  test('the policy is asked only when a walk-in and an order are both waiting', () => {
+    const asked: number[] = [];
+    runScenario('today', arrivals, one, d => (asked.push(d.at), d.fallback));
+    expect(asked).toEqual([one.serviceMinutes]);
+  });
+
+  test('choosing the order first changes who is served and what is lost', () => {
+    const mixFirst = runScenario('today', arrivals, one, () => 'order');
+    const auto = runScenario('today', arrivals, one);
+    expect(ofType(mixFirst.timeline, 'mix-start')[0]?.at).toBeLessThan(ofType(auto.timeline, 'mix-start')[0]?.at ?? 0);
+    expect(mixFirst.metrics).not.toEqual(auto.metrics);
+  });
 });

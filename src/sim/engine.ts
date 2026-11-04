@@ -18,6 +18,25 @@ export interface Comparison {
   hub: ScenarioResult;
 }
 
+/** What a free staff member takes next when a walk-in and a mix order are both waiting. */
+export type Choice = 'walk-in' | 'order';
+
+export interface Decision {
+  /** Shop minute the staff member came free. */
+  at: number;
+  staff: number;
+  /** Zero-based position among the decisions of this run. */
+  index: number;
+  /** What autoplay takes: whoever has waited longest. */
+  fallback: Choice;
+}
+
+/** Asked only at a real decision; returning anything but a choice is not possible, so a run always finishes. */
+export type DecisionPolicy = (decision: Decision) => Choice;
+
+/** Autoplay: first come, first served. */
+export const autoplay: DecisionPolicy = d => d.fallback;
+
 /**
  * At equal times a freed staff member is handed the next customer before anyone new
  * arrives, and before a waiting walk-in gives up: a walk-in served exactly at the
@@ -68,10 +87,11 @@ function before(a: {p: Pending; seq: number}, b: {p: Pending; seq: number}): boo
 }
 
 /** Replays one shift's arrivals under one scenario. Pure: no randomness is drawn here (ADR 0001). */
-export function runScenario(scenario: ScenarioName, arrivals: Arrivals, params: Params): ScenarioResult {
+export function runScenario(scenario: ScenarioName, arrivals: Arrivals, params: Params, policy: DecisionPolicy = autoplay): ScenarioResult {
   const timeline: TimelineEvent[] = [];
   const staff: StaffState[] = Array.from({length: params.staff}, () => 'idle');
   const waiting: Waiting[] = [];
+  let decisions = 0;
   const queue = new EventQueue();
   for (const walkIn of arrivals.walkIns) queue.push({kind: 'arrive-walk-in', at: walkIn.at, walkIn});
   for (const order of arrivals.mixOrders) queue.push({kind: 'arrive-order', at: order.at, order});
@@ -103,7 +123,13 @@ export function runScenario(scenario: ScenarioName, arrivals: Arrivals, params: 
       case 'free': {
         staff[p.staff] = 'idle';
         timeline.push({type: 'staff-free', at: p.at, staff: p.staff});
-        const next = waiting.shift();
+        const first = waiting[0];
+        let index = 0;
+        if (first && waiting.some(w => w.kind !== first.kind)) {
+          const choice = policy({at: p.at, staff: p.staff, index: decisions++, fallback: first.kind});
+          index = waiting.findIndex(w => w.kind === choice);
+        }
+        const [next] = waiting.splice(index, 1);
         if (next) start(p.at, p.staff, next);
         break;
       }

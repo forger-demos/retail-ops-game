@@ -15,7 +15,9 @@ import {drawComparison, drawResults} from './scenes/results';
 import {drawShop} from './scenes/shop';
 import {drawTitle, promptVisible} from './scenes/title';
 import {DEFAULT_SEED} from './sim/cli';
-import {compare, type Comparison} from './sim/engine';
+import {runControlled, type ControlledRun} from './sim/control';
+import {drawArrivals} from './sim/arrivals';
+import {compare, type Choice, type Comparison, type Decision} from './sim/engine';
 import {savings} from './sim/extrapolate';
 import {SCREEN_HEIGHT} from './render/screen-size';
 import type {ScenarioName} from './sim/params';
@@ -30,6 +32,10 @@ const button = (id: string): HTMLButtonElement => {
 };
 if (!canvas || !prompt || !stage) throw new Error('#screen, #prompt or .stage is missing from index.html');
 const reshuffleButton = button('reshuffle');
+const controlButton = button('control');
+const pickButtons: Readonly<Record<Choice, HTMLButtonElement>> = {'walk-in': button('walk-in'), order: button('order')};
+/** Real milliseconds the shift waits for a pick before taking autoplay's, so doing nothing is autoplay. */
+const DECISION_MS = 6000;
 const buttons = {
   open: button('open-settings'),
   decrease: button('decrease'),
@@ -67,14 +73,15 @@ const mode = inputMode(query => window.matchMedia(query).matches);
 const prompts = promptsFor(mode);
 document.body.dataset.input = mode;
 const reshuffleHint = mode === 'touch' ? 'the reshuffle button' : 'R';
+const controlHint = mode === 'touch' ? 'Use the take control button to decide who is served next.' : 'Press C to take control of who is served next.';
 const settingsHint = mode === 'touch' ? 'Use the settings button for settings.' : 'Press S for settings.';
 
 const LABELS: Readonly<Record<Step, string>> = {
   title: `PAINT RUSH title screen. ${prompts.verb} to start. ${settingsHint}`,
   settings: 'Settings menu. Up and down choose a setting, left and right or the minus and plus buttons change it, back returns to the title.',
-  today: `Shop scene, ${SCENARIO_TITLES.today}. ${prompts.verb} to skip ahead.`,
+  today: `Shop scene, ${SCENARIO_TITLES.today}. ${prompts.verb} to skip ahead. ${controlHint}`,
   'today-results': `Today's results. ${prompts.verb} to run the same day with a central hub.`,
-  hub: `Shop scene, ${SCENARIO_TITLES.hub}. ${prompts.verb} to skip ahead.`,
+  hub: `Shop scene, ${SCENARIO_TITLES.hub}. ${prompts.verb} to skip ahead. ${controlHint}`,
   comparison: `Comparison of today and with a central hub. ${prompts.verb} to replay this day, or use ${reshuffleHint} to reshuffle the day.`,
 };
 
@@ -82,7 +89,13 @@ if (screen) {
   const s = screen;
   const link = fromQuery(key => new URLSearchParams(location.search).get(key));
   let flow = link.flow;
+  let baseDay = comparison;
   let day = comparison;
+  let controlOn = false;
+  let choices: Choice[] = [];
+  let run: ControlledRun | null = null;
+  /** Real time the shift stopped to wait for a pick, or null while it is running. */
+  let decidingSince: number | null = null;
   let builtFor = settings;
   let beats = beatsFor(day);
   let start = 0;
@@ -111,17 +124,31 @@ if (screen) {
     buttons.open.hidden = flow.step !== 'title';
     for (const b of [buttons.decrease, buttons.increase, buttons.reset, buttons.back]) b.hidden = !inMenu;
     reshuffleButton.hidden = flow.step !== 'comparison' && !inMenu;
+    const replaying = replayOf(flow.step) !== null;
+    controlButton.hidden = !replaying;
+    controlButton.textContent = controlOn ? 'AUTOPLAY' : 'TAKE CONTROL';
+    controlButton.setAttribute('aria-pressed', String(controlOn));
+    for (const b of Object.values(pickButtons)) b.hidden = !(replaying && deciding());
     buttons.back.setAttribute('aria-disabled', String(blocker() !== null));
   };
 
   const enter = (next: FlowState, now: number, minute = 0): void => {
     if (next.seed !== day.seed || builtFor !== settings) {
-      day = compare(next.seed, params);
+      baseDay = compare(next.seed, params);
+      day = baseDay;
       builtFor = settings;
       beats = beatsFor(day);
     }
     if (next.step === 'settings' && flow.step !== 'settings') editor = openEditor(settings);
     flow = next;
+    const entering = replayOf(next.step);
+    if (entering) {
+      day = next.step === 'today' ? baseDay : {...day, [entering]: baseDay[entering]};
+      beats = beatsFor(day);
+      choices = [];
+      run = null;
+      decidingSince = null;
+    }
     start = now - msFor(minute);
     canvas.setAttribute('aria-label', LABELS[flow.step]);
     document.body.dataset.scene = replayOf(flow.step) ? 'shop' : flow.step === 'today-results' ? 'results' : flow.step;
@@ -134,6 +161,62 @@ if (screen) {
     if (flow.step === 'comparison') announce(comparisonAnnouncement(day, savings(day)));
   };
 
+  const pendingNow = (): Decision | null => (controlOn ? (run?.pending ?? null) : null);
+  const deciding = (): boolean => decidingSince !== null;
+
+  /** Shop minute a replay shows: it stops at an unmade decision rather than running past it. */
+  const replayMinute = (now: number): number => {
+    const minute = minuteAt(now - start);
+    const pending = pendingNow();
+    return pending && minute >= pending.at ? pending.at : minute;
+  };
+
+  const rerun = (scenario: ScenarioName): void => {
+    run = runControlled(scenario, drawArrivals(flow.seed, params), params, choices);
+    day = {...day, [scenario]: run.result};
+    beats = beatsFor(day);
+  };
+
+  const resolve = (choice: Choice, now: number): void => {
+    const scenario = replayOf(flow.step);
+    const pending = pendingNow();
+    if (!scenario || !pending) return;
+    choices = [...choices, choice];
+    rerun(scenario);
+    start = now - msFor(pending.at);
+    decidingSince = null;
+    syncControls();
+  };
+
+  /** Starts, and times out, the wait for a pick. */
+  const tick = (now: number): void => {
+    const scenario = replayOf(flow.step);
+    const pending = pendingNow();
+    if (!scenario || !pending) {
+      if (decidingSince !== null) {
+        decidingSince = null;
+        syncControls();
+      }
+      return;
+    }
+    if (decidingSince === null && minuteAt(now - start) >= pending.at) {
+      decidingSince = now;
+      syncControls();
+    }
+    if (decidingSince !== null && now - decidingSince >= DECISION_MS) resolve(pending.fallback, now);
+  };
+
+  const toggleControl = (now: number): void => {
+    const scenario = replayOf(flow.step);
+    if (!scenario) return;
+    if (deciding()) start = now - msFor(pendingNow()?.at ?? 0);
+    controlOn = !controlOn;
+    if (controlOn && !run) rerun(scenario);
+    decidingSince = null;
+    syncControls();
+    announce(controlOn ? prompts.controlOn : prompts.controlOff);
+  };
+
   const draw = (now: number): void => {
     const scenario = replayOf(flow.step);
     if (flow.step === 'title') drawTitle(s.rect, prompts.title, promptVisible(now - start, reducedMotion.matches), prompts.settingsHint);
@@ -141,11 +224,11 @@ if (screen) {
     else if (flow.step === 'today-results') drawResults(s.rect, todayRows(day.today.metrics), day.today.metrics.salesLostGbp === 0, prompts.results);
     else if (flow.step === 'comparison') drawComparison(s.rect, comparisonRows(day), savingsRows(day, savings(day)), prompts.comparison);
     else if (scenario) {
-      const minute = minuteAt(now - start);
+      const minute = replayMinute(now);
       const state = replayState(day[scenario].timeline, params.staff, params.shiftMinutes, minute);
       const beat = beatAt(beats[scenario], state.minute);
-      const text = beat?.text ?? '';
-      const chars = revealed(text, msFor(state.minute - (beat?.at ?? 0)), reducedMotion.matches);
+      const text = deciding() ? prompts.decision : (beat?.text ?? '');
+      const chars = deciding() ? text.length : revealed(text, msFor(state.minute - (beat?.at ?? 0)), reducedMotion.matches);
       announce(text);
       drawShop(s.rect, {scenario, state, params, text, chars});
     }
@@ -207,10 +290,20 @@ if (screen) {
       enter(reshuffle(flow), now);
       return true;
     }
+    if (action === 'control') {
+      toggleControl(now);
+      return replayOf(flow.step) !== null;
+    }
+    if (action === 'walk-in' || action === 'order') {
+      if (!deciding()) return false;
+      resolve(action, now);
+      return true;
+    }
     if (action !== 'advance') return false;
+    if (deciding()) return true;
     const scenario = replayOf(flow.step);
     if (scenario) {
-      const minute = minuteAt(now - start);
+      const minute = replayMinute(now);
       const next = nextBeatAfter(beats[scenario], minute);
       if (next) {
         start -= msFor(next.at - minute);
@@ -248,6 +341,9 @@ if (screen) {
     act('advance');
   });
 
+  controlButton.addEventListener('click', () => act('control'));
+  pickButtons['walk-in'].addEventListener('click', () => act('walk-in'));
+  pickButtons.order.addEventListener('click', () => act('order'));
   reshuffleButton.addEventListener('click', () => act('reshuffle'));
   buttons.open.addEventListener('click', () => act('settings'));
   buttons.decrease.addEventListener('click', () => act('decrease'));
@@ -257,6 +353,7 @@ if (screen) {
 
   enter(flow, performance.now(), link.minute);
   const frame = (now: number): void => {
+    tick(now);
     draw(now);
     requestAnimationFrame(frame);
   };
