@@ -1,5 +1,7 @@
 import {describe, expect, test} from 'bun:test';
 
+import {isShade} from '../render/palette';
+
 import {promptsFor} from '../render/prompts';
 import {SCREEN_HEIGHT, SCREEN_WIDTH} from '../render/screen-size';
 import {BLINK_MS, drawTitle, HOLD_MS, promptVisible} from './title';
@@ -31,8 +33,8 @@ describe('title screen', () => {
     }
   });
 
-  test('uses only the four shades', () => {
-    for (const [, , , , s] of draw(true)) expect([0, 1, 2, 3]).toContain(s);
+  test('uses only palette colours', () => {
+    for (const [, , , , s] of draw(true)) expect(isShade(s)).toBe(true);
   });
 
   test('hiding the prompt draws less', () => {

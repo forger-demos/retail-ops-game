@@ -4,6 +4,8 @@ import {pathToFileURL} from 'url';
 
 import {expect, test} from '@playwright/test';
 
+import {PALETTE_TOKENS} from '../../src/render/palette';
+
 const BUILD = join(import.meta.dirname, '../../dist/paint-rush.html');
 const VIEWPORTS = [
   {name: 'phone', width: 390, height: 844},
@@ -41,8 +43,14 @@ for (const viewport of VIEWPORTS) {
     expect(box.y).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
     expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
+    const frame = await page.locator('.console').boundingBox();
+    if (!frame) throw new Error('the console frame is not laid out');
+    expect(frame.x).toBeGreaterThanOrEqual(0);
+    expect(frame.y).toBeGreaterThanOrEqual(0);
+    expect(frame.x + frame.width).toBeLessThanOrEqual(viewport.width);
+    expect(frame.y + frame.height).toBeLessThanOrEqual(viewport.height);
 
-    const drawn = await page.evaluate(() => {
+    const drawn = await page.evaluate(tokens => {
       const el = document.querySelector('#screen') as HTMLCanvasElement;
       const css = getComputedStyle(document.documentElement);
       const probe = document.createElement('canvas').getContext('2d') as CanvasRenderingContext2D;
@@ -51,12 +59,12 @@ for (const viewport of VIEWPORTS) {
         probe.fillRect(0, 0, 1, 1);
         return [...probe.getImageData(0, 0, 1, 1).data.slice(0, 3)].join(',');
       };
-      const palette = ['--gb-0', '--gb-1', '--gb-2', '--gb-3'].map(t => toRgb(css.getPropertyValue(t).trim()));
+      const palette = tokens.map(t => toRgb(css.getPropertyValue(t).trim()));
       const data = (el.getContext('2d') as CanvasRenderingContext2D).getImageData(0, 0, el.width, el.height).data;
       const seen = new Set<string>();
       for (let i = 0; i < data.length; i += 4) seen.add(`${data[i]},${data[i + 1]},${data[i + 2]}`);
       return {width: el.width, height: el.height, rendering: getComputedStyle(el).imageRendering, palette, seen: [...seen]};
-    });
+    }, [...PALETTE_TOKENS]);
     expect(drawn.width).toBe(160);
     expect(drawn.height).toBe(144);
     expect(['pixelated', 'crisp-edges']).toContain(drawn.rendering);

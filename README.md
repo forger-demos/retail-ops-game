@@ -2,7 +2,7 @@
 
 A short browser demo for an executive audience about what on-site paint mixing costs a shop. While staff mix tins to order they are off the floor, and walk-ins who find nobody to serve them leave. The demo replays one shift as it runs today, then the same shift with large orders sent to a central hub, and ends on the sales saved.
 
-It is drawn on a 160x144 screen in four shades of green, scaled up by whole pixels. All art and sound are original. See [docs/plan-paint-rush.md](docs/plan-paint-rush.md) for the plan and [GLOSSARY.md](GLOSSARY.md) for the vocabulary.
+It is drawn on a 160x144 screen in a limited 8-bit palette with real colour, inside a drawn handheld console, scaled up by whole pixels. All art and sound are original. The look is chosen in [docs/adr/0003-play-first-and-a-richer-palette.md](docs/adr/0003-play-first-and-a-richer-palette.md) and judged against the brief in [docs/plan-paint-rush-v2.md](docs/plan-paint-rush-v2.md). See [docs/plan-paint-rush.md](docs/plan-paint-rush.md) for the plan and [GLOSSARY.md](GLOSSARY.md) for the vocabulary.
 
 ## Run
 
@@ -45,7 +45,7 @@ C during a replay takes control (a TAKE CONTROL button does on a phone). When a 
 
 S on the title opens the settings menu (a SETTINGS button does on a phone). It lists every parameter of the simulation plus the replay speed: up and down choose a row, left and right change it, and on a phone you tap a row and use the on-screen - and + buttons. RESHUFFLE draws a new day, RESET restores the defaults, and BACK (or Enter or Escape) returns to the title. Order-size percentages must total 100 before BACK is allowed. Values are kept in the browser's storage and used by the next run; when storage is blocked they still apply for the session and the menu says they are not saved.
 
-To open a step directly, for rehearsal, add `?scene=` to the URL: `shop` for a replay (with `&scenario=hub` for the hub run and `&minute=<shop minute>` to start part-way through), `results` for today's results, `comparison` for the comparison. `&seed=<n>` picks the day.
+To open a step directly, for rehearsal, add `?scene=` to the URL: `shop` for a replay (with `&scenario=hub` for the hub run and `&minute=<shop minute>` to start part-way through), `results` for today's results, `comparison` for the comparison, `style-frame` for the still the v2 look is judged on (the ten-tin dilemma at the till; `&moment=unmanned` for the counter left empty while it is mixed). `&seed=<n>` picks the day.
 
 ## Layout
 
@@ -54,4 +54,5 @@ To open a step directly, for rehearsal, add `?scene=` to the URL: `shop` for a r
 - `src/scenes/` - what is drawn on each screen.
 - `src/flow/` - the order of the pitch, the deep links into it, the input actions that keys, taps and buttons share, and the settings model and its storage, all pure.
 - `src/audio/` - the sound effects: which timeline events make which effect, and the Web Audio player that synthesises them. Muted until M or the sound button; no audio files.
-- `src/styles/tokens.css` - the four colours; the only file that writes a colour.
+- `src/styles/tokens.css` - the screen palette and the console's colours; the only file that writes a colour. `src/render/palette.ts` indexes the palette tokens, and sprites name each pixel by its palette key.
+- `docs/captures/` - short recordings of the demo running.

@@ -1,5 +1,7 @@
 import {describe, expect, test} from 'bun:test';
 
+import {isShade} from './palette';
+
 import {change, DEFAULT_SETTINGS, FIELDS, moveCursor, openEditor, VISIBLE_ROWS, type Editor} from '../flow/settings';
 import {textWidth} from './font';
 import {SCREEN_HEIGHT, SCREEN_WIDTH} from './screen-size';
@@ -23,7 +25,7 @@ describe('settings screen', () => {
         expect(y).toBeGreaterThanOrEqual(0);
         expect(x + w).toBeLessThanOrEqual(SCREEN_WIDTH);
         expect(y + h).toBeLessThanOrEqual(CONTROLS_TOP);
-        expect([0, 1, 2, 3]).toContain(s);
+        expect(isShade(s)).toBe(true);
       }
       ed = moveCursor(ed, 1);
     }

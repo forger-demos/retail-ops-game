@@ -36,6 +36,6 @@ describe('font', () => {
       return n;
     };
     expect(count('paint')).toBe(count('PAINT'));
-    expect(() => drawText(() => undefined, '?', 0, 0, 0)).toThrow(UnknownGlyphError);
+    expect(() => drawText(() => undefined, '@', 0, 0, 0)).toThrow(UnknownGlyphError);
   });
 });

@@ -4,6 +4,8 @@ import {pathToFileURL} from 'url';
 
 import {expect, type Page, test} from '@playwright/test';
 
+import {PALETTE_TOKENS} from '../../src/render/palette';
+
 const BUILD = join(import.meta.dirname, '../../dist/paint-rush.html');
 const URL = pathToFileURL(BUILD).href;
 
@@ -12,7 +14,7 @@ test.beforeAll(() => {
 });
 
 async function coloursOutsidePalette(page: Page): Promise<string[]> {
-  return page.evaluate(() => {
+  return page.evaluate(tokens => {
     const el = document.querySelector('#screen') as HTMLCanvasElement;
     const css = getComputedStyle(document.documentElement);
     const probe = document.createElement('canvas').getContext('2d') as CanvasRenderingContext2D;
@@ -21,15 +23,15 @@ async function coloursOutsidePalette(page: Page): Promise<string[]> {
       probe.fillRect(0, 0, 1, 1);
       return [...probe.getImageData(0, 0, 1, 1).data.slice(0, 3)].join(',');
     };
-    const palette = ['--gb-0', '--gb-1', '--gb-2', '--gb-3'].map(t => toRgb(css.getPropertyValue(t).trim()));
+    const palette = tokens.map(t => toRgb(css.getPropertyValue(t).trim()));
     const data = (el.getContext('2d') as CanvasRenderingContext2D).getImageData(0, 0, el.width, el.height).data;
     const seen = new Set<string>();
     for (let i = 0; i < data.length; i += 4) seen.add(`${data[i]},${data[i + 1]},${data[i + 2]}`);
     return [...seen].filter(c => !palette.includes(c));
-  });
+  }, [...PALETTE_TOKENS]);
 }
 
-test('SPACE on the title starts the shop replay, narrated, in the four shades', async ({page}) => {
+test('SPACE on the title starts the shop replay, narrated, in palette colours', async ({page}) => {
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   await page.goto(URL);
@@ -59,4 +61,19 @@ test('without a 2D canvas the results show as text', async ({page}) => {
   await expect(page.getByText('This demo needs a modern browser.')).toBeVisible();
   await expect(page.getByText(/^TODAY: \d+ of \d+ walk-ins served/)).toBeVisible();
   await expect(page.getByText(/saves GBP\d+ in one shift/)).toBeVisible();
+});
+
+test('the style frame shows the composed dilemma and the unmanned counter, in palette colours', async ({page}) => {
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await page.goto(`${URL}?scene=style-frame`);
+  await expect(page.locator('body')).toHaveAttribute('data-scene', 'style-frame');
+  await expect(page.locator('#prompt')).toHaveText('A TRADE ORDER: 10 TINS. MIX THEM NOW?');
+  expect(await coloursOutsidePalette(page)).toEqual([]);
+  await page.goto(`${URL}?scene=style-frame&moment=unmanned`);
+  await expect(page.locator('#prompt')).toHaveText('THE COUNTER IS UNMANNED. ANOTHER SALE WALKS OUT.');
+  expect(await coloursOutsidePalette(page)).toEqual([]);
+  await page.keyboard.press('Space');
+  await expect(page.locator('body')).toHaveAttribute('data-scene', 'title');
+  expect(errors).toEqual([]);
 });

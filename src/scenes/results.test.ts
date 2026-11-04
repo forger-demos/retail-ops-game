@@ -1,5 +1,7 @@
 import {describe, expect, test} from 'bun:test';
 
+import {isShade} from '../render/palette';
+
 import {textWidth} from '../render/font';
 import {comparisonRows, FOOTNOTE, NO_LOSS, savingsRows, todayRows, type Row} from '../render/results';
 import {promptsFor} from '../render/prompts';
@@ -26,7 +28,7 @@ const inScreen = (calls: Call[]): void => {
     expect(y).toBeGreaterThanOrEqual(0);
     expect(x + w).toBeLessThanOrEqual(SCREEN_WIDTH);
     expect(y + h).toBeLessThanOrEqual(SCREEN_HEIGHT);
-    expect([0, 1, 2, 3]).toContain(s);
+    expect(isShade(s)).toBe(true);
   }
 };
 
