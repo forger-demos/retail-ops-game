@@ -134,9 +134,10 @@
       "effort": "small",
       "issue": null,
       "title": "Chiptune sound effects, muted by default",
-      "description": "Original square-wave effects generated with the Web Audio API for walk-in, walkout, tin done and van leaving. Muted on load; M toggles and the status bar shows the state. No audio files.",
+      "description": "Original square-wave effects generated with the Web Audio API for walk-in, walkout, tin done and van leaving. Muted on load; M toggles and the status bar shows the state. A finger-sized on-screen sound button (beside RESHUFFLE, same style, 44x44 minimum) toggles it on touch devices. No audio files.",
       "acceptance_criteria": [
-        "No sound plays until M is pressed",
+        "No sound plays until M is pressed or the sound button is tapped",
+        "The sound button is keyboard focusable, at least 44x44 CSS px, and its label says whether sound is on",
         "Each named event triggers its effect when unmuted",
         "No audio file is added; effects are synthesised",
         "The built single file still runs offline"
