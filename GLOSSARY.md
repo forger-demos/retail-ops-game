@@ -16,3 +16,5 @@
 - **Timeline** - the ordered events of a simulated shift, replayed by the renderer.
 - **Replay** - the shop scene playing one scenario's timeline at the time scale.
 - **Beat** - one line of narration in the text box, derived from the timeline.
+- **Comparison** - the last step of the pitch: both scenarios' lost walk-ins and sales side by side, and the sales saved.
+- **Sales saved** - today's sales lost minus the hub's, for one shift; scaled by trading days per year to a year, by a 52nd of that to a week, and by the number of stores to the estate. It excludes the hub's prep and delivery costs.

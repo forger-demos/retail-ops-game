@@ -27,6 +27,9 @@ export interface Params {
   /** Orders with more tins than this go to the hub in the `hub` scenario. */
   hubThresholdTins: number;
   hubDeliveryMinutes: number;
+  /** Shops in the estate, for scaling one shop's saving up. */
+  stores: number;
+  tradingDaysPerYear: number;
 }
 
 export const DEFAULT_PARAMS: Params = {
@@ -48,6 +51,8 @@ export const DEFAULT_PARAMS: Params = {
   tinSizeMix: {'750ml': 15, '2.5L': 40, '5L': 45},
   hubThresholdTins: 5,
   hubDeliveryMinutes: 120,
+  stores: 50,
+  tradingDaysPerYear: 360,
 };
 
 export function withParams(overrides: Partial<Params> = {}): Params {

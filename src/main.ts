@@ -1,13 +1,17 @@
-import {beatAt, narrationBeats, nextBeatAfter, SCENARIO_TITLES} from './render/narration';
+import {advance, fromQuery, replayOf, reshuffle, type FlowState, type Step} from './flow/flow';
+import {type Beat, beatAt, narrationBeats, nextBeatAfter, SCENARIO_TITLES} from './render/narration';
 import {readPalette} from './render/palette';
 import {realMsFor, replayState, shopMinuteAt} from './render/replay';
 import {createScreen, type Screen} from './render/screen';
+import {comparisonAnnouncement, comparisonRows, resultsAnnouncement, savingsRows, todayRows} from './render/results';
 import {revealed} from './render/textbox';
 import {fallbackLines, FALLBACK_HEADLINE} from './scenes/fallback';
+import {drawComparison, drawResults} from './scenes/results';
 import {drawShop} from './scenes/shop';
-import {drawTitle, promptVisible} from './scenes/title';
+import {drawTitle, PROMPT, promptVisible} from './scenes/title';
 import {DEFAULT_SEED} from './sim/cli';
-import {compare} from './sim/engine';
+import {compare, type Comparison} from './sim/engine';
+import {savings} from './sim/extrapolate';
 import {DEFAULT_PARAMS, type ScenarioName} from './sim/params';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#screen');
@@ -37,58 +41,82 @@ try {
   showFallback(canvas);
 }
 
-type Scene = {name: 'title'; start: number} | {name: 'shop'; scenario: ScenarioName; start: number};
-
-function shopScene(scenario: ScenarioName, startMinute: number, now: number): Scene {
-  const label = `Shop scene, ${SCENARIO_TITLES[scenario]}. Press space to skip ahead.`;
-  canvas?.setAttribute('aria-label', label);
-  document.body.dataset.scene = 'shop';
-  return {name: 'shop', scenario, start: now - realMsFor(startMinute)};
-}
-
-function initialScene(now: number): Scene {
-  const query = new URLSearchParams(location.search);
-  if (query.get('scene') !== 'shop') {
-    document.body.dataset.scene = 'title';
-    return {name: 'title', start: now};
-  }
-  const scenario: ScenarioName = query.get('scenario') === 'hub' ? 'hub' : 'today';
-  return shopScene(scenario, Math.max(0, Number(query.get('minute')) || 0), now);
-}
+const LABELS: Readonly<Record<Step, string>> = {
+  title: 'PAINT RUSH title screen. Press space to start.',
+  today: `Shop scene, ${SCENARIO_TITLES.today}. Press space to skip ahead.`,
+  'today-results': "Today's results. Press space to run the same day with a central hub.",
+  hub: `Shop scene, ${SCENARIO_TITLES.hub}. Press space to skip ahead.`,
+  comparison: 'Comparison of today and with a central hub. Press space to replay this day, or R to reshuffle the day.',
+};
 
 if (screen) {
   const s = screen;
-  const beats = {today: narrationBeats('today', comparison.today.timeline, params), hub: narrationBeats('hub', comparison.hub.timeline, params)};
-  let scene = initialScene(performance.now());
+  const link = fromQuery(key => new URLSearchParams(location.search).get(key));
+  let flow = link.flow;
+  let day = comparison;
+  let beats = beatsFor(day);
+  let start = 0;
+
+  function beatsFor(c: Comparison): Record<ScenarioName, Beat[]> {
+    return {today: narrationBeats('today', c.today.timeline, params), hub: narrationBeats('hub', c.hub.timeline, params)};
+  }
+
+  const announce = (text: string): void => {
+    if (prompt.textContent !== text) prompt.textContent = text;
+  };
+
+  const enter = (next: FlowState, now: number, minute = 0): void => {
+    if (next.seed !== day.seed) {
+      day = compare(next.seed, params);
+      beats = beatsFor(day);
+    }
+    flow = next;
+    start = now - realMsFor(minute);
+    canvas.setAttribute('aria-label', LABELS[flow.step]);
+    document.body.dataset.scene = replayOf(flow.step) ? 'shop' : flow.step === 'today-results' ? 'results' : flow.step;
+    document.body.dataset.step = flow.step;
+    if (flow.step === 'title') announce(PROMPT);
+    if (flow.step === 'today-results') announce(resultsAnnouncement(day.today.metrics));
+    if (flow.step === 'comparison') announce(comparisonAnnouncement(day, savings(day)));
+  };
 
   const draw = (now: number): void => {
-    if (scene.name === 'title') {
-      drawTitle(s.rect, promptVisible(now - scene.start, reducedMotion.matches));
-      return;
+    const scenario = replayOf(flow.step);
+    if (flow.step === 'title') drawTitle(s.rect, promptVisible(now - start, reducedMotion.matches));
+    else if (flow.step === 'today-results') drawResults(s.rect, todayRows(day.today.metrics), day.today.metrics.salesLostGbp === 0);
+    else if (flow.step === 'comparison') drawComparison(s.rect, comparisonRows(day), savingsRows(day, savings(day)));
+    else if (scenario) {
+      const minute = shopMinuteAt(now - start);
+      const state = replayState(day[scenario].timeline, params.staff, params.shiftMinutes, minute);
+      const beat = beatAt(beats[scenario], state.minute);
+      const text = beat?.text ?? '';
+      const chars = revealed(text, realMsFor(state.minute - (beat?.at ?? 0)), reducedMotion.matches);
+      announce(text);
+      drawShop(s.rect, {scenario, state, params, text, chars});
     }
-    const minute = shopMinuteAt(now - scene.start);
-    const run = comparison[scene.scenario];
-    const state = replayState(run.timeline, params.staff, params.shiftMinutes, minute);
-    const beat = beatAt(beats[scene.scenario], state.minute);
-    const text = beat?.text ?? '';
-    const chars = revealed(text, realMsFor(state.minute - (beat?.at ?? 0)), reducedMotion.matches);
-    if (prompt.textContent !== text) prompt.textContent = text;
-    drawShop(s.rect, {scenario: scene.scenario, state, params, text, chars});
   };
 
   window.addEventListener('keydown', e => {
-    if (e.code !== 'Space' || e.repeat) return;
+    if (e.repeat || (e.code !== 'Space' && e.code !== 'KeyR')) return;
     e.preventDefault();
     const now = performance.now();
-    if (scene.name === 'title') {
-      scene = shopScene('today', 0, now);
+    if (e.code === 'KeyR') {
+      if (flow.step === 'comparison') enter(reshuffle(flow), now);
       return;
     }
-    const minute = shopMinuteAt(now - scene.start);
-    const next = nextBeatAfter(beats[scene.scenario], minute);
-    if (next) scene.start -= realMsFor(next.at - minute);
+    const scenario = replayOf(flow.step);
+    if (scenario) {
+      const minute = shopMinuteAt(now - start);
+      const next = nextBeatAfter(beats[scenario], minute);
+      if (next) {
+        start -= realMsFor(next.at - minute);
+        return;
+      }
+    }
+    enter(advance(flow), now);
   });
 
+  enter(flow, performance.now(), link.minute);
   const frame = (now: number): void => {
     draw(now);
     requestAnimationFrame(frame);
