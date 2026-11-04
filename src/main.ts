@@ -3,6 +3,7 @@ import {type Action, keyAction, REPEATABLE, tapAccepted} from './flow/input';
 import {change, describe, type Editor, moveCursor, openEditor, problem, resetToDefaults, selectVisible} from './flow/settings';
 import {loadSettings, openStorage, saveSettings} from './flow/settings-store';
 import {type Beat, beatAt, narrationBeats, nextBeatAfter, SCENARIO_TITLES} from './render/narration';
+import {createSfx, effectsBetween, type AudioLike} from './audio/sfx';
 import {readPalette} from './render/palette';
 import {inputMode, promptsFor} from './render/prompts';
 import {realMsFor, replayState, shopMinuteAt} from './render/replay';
@@ -33,6 +34,7 @@ const button = (id: string): HTMLButtonElement => {
 if (!canvas || !prompt || !stage) throw new Error('#screen, #prompt or .stage is missing from index.html');
 const reshuffleButton = button('reshuffle');
 const controlButton = button('control');
+const soundButton = button('sound');
 const pickButtons: Readonly<Record<Choice, HTMLButtonElement>> = {'walk-in': button('walk-in'), order: button('order')};
 /** Real milliseconds the shift waits for a pick before taking autoplay's, so doing nothing is autoplay. */
 const DECISION_MS = 6000;
@@ -69,12 +71,18 @@ try {
   showFallback(canvas);
 }
 
+const sfx = createSfx(() => {
+  const w = window as unknown as {AudioContext?: new () => AudioLike; webkitAudioContext?: new () => AudioLike};
+  const Context = w.AudioContext ?? w.webkitAudioContext;
+  return Context ? new Context() : null;
+});
+
 const mode = inputMode(query => window.matchMedia(query).matches);
 const prompts = promptsFor(mode);
 document.body.dataset.input = mode;
 const reshuffleHint = mode === 'touch' ? 'the reshuffle button' : 'R';
 const controlHint = mode === 'touch' ? 'Use the take control button to decide who is served next.' : 'Press C to take control of who is served next.';
-const settingsHint = mode === 'touch' ? 'Use the settings button for settings.' : 'Press S for settings.';
+const settingsHint = mode === 'touch' ? 'Use the settings button for settings.' : 'Press S for settings, M for sound.';
 
 const LABELS: Readonly<Record<Step, string>> = {
   title: `PAINT RUSH title screen. ${prompts.verb} to start. ${settingsHint}`,
@@ -99,6 +107,8 @@ if (screen) {
   let builtFor = settings;
   let beats = beatsFor(day);
   let start = 0;
+  /** Shop minute the last replay frame showed, so each frame plays only the effects it has just passed. */
+  let heardTo = 0;
   let editor: Editor = openEditor(settings);
   let remembered = store !== null;
 
@@ -121,6 +131,8 @@ if (screen) {
 
   const syncControls = (): void => {
     const inMenu = flow.step === 'settings';
+    soundButton.hidden = inMenu;
+    soundButton.textContent = sfx.on ? 'SOUND ON' : 'SOUND OFF';
     buttons.open.hidden = flow.step !== 'title';
     for (const b of [buttons.decrease, buttons.increase, buttons.reset, buttons.back]) b.hidden = !inMenu;
     reshuffleButton.hidden = flow.step !== 'comparison' && !inMenu;
@@ -150,6 +162,7 @@ if (screen) {
       decidingSince = null;
     }
     start = now - msFor(minute);
+    heardTo = minute;
     canvas.setAttribute('aria-label', LABELS[flow.step]);
     document.body.dataset.scene = replayOf(flow.step) ? 'shop' : flow.step === 'today-results' ? 'results' : flow.step;
     document.body.dataset.step = flow.step;
@@ -230,7 +243,9 @@ if (screen) {
       const text = deciding() ? prompts.decision : (beat?.text ?? '');
       const chars = deciding() ? text.length : revealed(text, msFor(state.minute - (beat?.at ?? 0)), reducedMotion.matches);
       announce(text);
-      drawShop(s.rect, {scenario, state, params, text, chars});
+      for (const name of effectsBetween(day[scenario].timeline, heardTo, state.minute)) sfx.play(name);
+      heardTo = state.minute;
+      drawShop(s.rect, {scenario, state, params, text, chars, sound: sfx.on});
     }
   };
 
@@ -280,6 +295,13 @@ if (screen) {
   const act = (action: Action): boolean => {
     const now = performance.now();
     if (flow.step === 'settings') return actInMenu(action, now);
+    if (action === 'sound') {
+      const wasOn = sfx.on;
+      const isOn = sfx.toggle();
+      announce(isOn ? 'Sound on.' : wasOn ? 'Sound off.' : 'Sound stays off. This browser has no audio.');
+      syncControls();
+      return true;
+    }
     if (action === 'settings') {
       if (flow.step !== 'title') return false;
       enter(openSettings(flow), now);
@@ -344,6 +366,7 @@ if (screen) {
   controlButton.addEventListener('click', () => act('control'));
   pickButtons['walk-in'].addEventListener('click', () => act('walk-in'));
   pickButtons.order.addEventListener('click', () => act('order'));
+  soundButton.addEventListener('click', () => act('sound'));
   reshuffleButton.addEventListener('click', () => act('reshuffle'));
   buttons.open.addEventListener('click', () => act('settings'));
   buttons.decrease.addEventListener('click', () => act('decrease'));

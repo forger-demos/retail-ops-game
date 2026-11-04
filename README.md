@@ -53,4 +53,5 @@ To open a step directly, for rehearsal, add `?scene=` to the URL: `shop` for a r
 - `src/render/` - the screen, palette, font, sprites, the text box, and the pure replay state and narration derived from a timeline.
 - `src/scenes/` - what is drawn on each screen.
 - `src/flow/` - the order of the pitch, the deep links into it, the input actions that keys, taps and buttons share, and the settings model and its storage, all pure.
+- `src/audio/` - the sound effects: which timeline events make which effect, and the Web Audio player that synthesises them. Muted until M or the sound button; no audio files.
 - `src/styles/tokens.css` - the four colours; the only file that writes a colour.

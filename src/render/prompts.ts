@@ -20,7 +20,7 @@ const PROMPTS: Readonly<Record<InputMode, Prompts>> = {
     title: 'PRESS SPACE',
     results: 'SPACE: SAME DAY WITH A CENTRAL HUB.',
     comparison: 'SPACE: REPLAY THIS DAY. R: RESHUFFLE THE DAY.',
-    settingsHint: 'S: SETTINGS',
+    settingsHint: 'S: SETTINGS  M: SOUND',
     verb: 'Press space',
     decision: 'W: SERVE THE WALK-IN. O: MIX THE ORDER.',
     controlOn: 'YOU DECIDE WHO IS NEXT. C: BACK TO AUTOPLAY.',
