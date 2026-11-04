@@ -24,7 +24,7 @@ Wireframes for shop-scene, two-run-results and settings are approved.
 
 ## v2 - play it, then prove it
 
-Plan: [docs/plan-paint-rush-v2.md](../docs/plan-paint-rush-v2.md). Everything after the style frame waits for the owner to approve it.
+Plan: [docs/plan-paint-rush-v2.md](../docs/plan-paint-rush-v2.md). Style frame approved; the rest is released.
 
 - P0 `v2-style-frame` - the new look in a console frame; the approval gate.
 - P0 `v2-play-mode` - two short played rounds with the 10-tin opening (after the style frame).
