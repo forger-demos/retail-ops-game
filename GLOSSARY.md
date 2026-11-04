@@ -14,3 +14,5 @@
 - **Time scale** - real seconds per shop minute; by default 1 s stands for 5 shop minutes, one tin.
 - **Seed** - the random seed that fixes arrivals; both scenarios of a run share it.
 - **Timeline** - the ordered events of a simulated shift, replayed by the renderer.
+- **Replay** - the shop scene playing one scenario's timeline at the time scale.
+- **Beat** - one line of narration in the text box, derived from the timeline.
