@@ -1,7 +1,32 @@
-/* The only place a colour is written. The screen draws in these four shades, darkest first. */
+/*
+ * The only place a colour is written. The screen draws from the --px-* palette, one token per
+ * colour, in the order src/render/palette.ts indexes them; the --shell-* tokens dress the console.
+ */
 :root {
-  --gb-0: #142b17;
-  --gb-1: #3d6b38;
-  --gb-2: #8cae4c;
-  --gb-3: #d0e3a0;
+  --px-ink: #1d1a2f;
+  --px-plum: #4a3b66;
+  --px-slate: #8b8fae;
+  --px-cream: #f6f0da;
+  --px-red: #d9443f;
+  --px-orange: #f08d2f;
+  --px-yellow: #f7d23f;
+  --px-leaf: #5db24b;
+  --px-forest: #2f6b3d;
+  --px-blue: #3b6fcf;
+  --px-sky: #8fd1f0;
+  --px-brown: #7c4a2d;
+  --px-tan: #d9a96b;
+  --px-skin: #f3c6a0;
+  --px-pink: #ec85a9;
+  --px-teal: #2ea39b;
+  --px-mist: #d3d7e8;
+  --px-mint: #bfe4c2;
+
+  --shell: #e9ded0;
+  --shell-shade: #c9b9a6;
+  --shell-dark: #8e7c6c;
+  --bezel: #3a3550;
+  --led-on: #ff4d4d;
+  --button-a: #b8325f;
+  --page: #241f36;
 }

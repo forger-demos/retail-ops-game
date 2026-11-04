@@ -14,6 +14,7 @@ import {revealed} from './render/textbox';
 import {fallbackLines, FALLBACK_HEADLINE} from './scenes/fallback';
 import {drawComparison, drawResults} from './scenes/results';
 import {drawShop} from './scenes/shop';
+import {styleFrame} from './scenes/style-frame';
 import {drawTitle, promptVisible} from './scenes/title';
 import {DEFAULT_SEED} from './sim/cli';
 import {runControlled, type ControlledRun} from './sim/control';
@@ -26,12 +27,15 @@ import type {ScenarioName} from './sim/params';
 const canvas = document.querySelector<HTMLCanvasElement>('#screen');
 const prompt = document.querySelector<HTMLElement>('#prompt');
 const stage = document.querySelector<HTMLElement>('.stage');
+const consoleFrame = document.querySelector<HTMLElement>('.console');
 const button = (id: string): HTMLButtonElement => {
   const el = document.querySelector<HTMLButtonElement>(`#${id}`);
   if (!el) throw new Error(`#${id} is missing from index.html`);
   return el;
 };
-if (!canvas || !prompt || !stage) throw new Error('#screen, #prompt or .stage is missing from index.html');
+if (!canvas || !prompt || !stage || !consoleFrame) throw new Error('#screen, #prompt, .stage or .console is missing from index.html');
+/** Clear space kept around the console, on top of the console's own size, in CSS pixels. */
+const MARGIN_PX = 12;
 const reshuffleButton = button('reshuffle');
 const controlButton = button('control');
 const soundButton = button('sound');
@@ -66,7 +70,11 @@ function showFallback(c: HTMLCanvasElement): void {
 
 let screen: Screen | null = null;
 try {
-  screen = createScreen(canvas, readPalette(token => getComputedStyle(document.documentElement).getPropertyValue(token)));
+  const fits = (): boolean => {
+    const frame = consoleFrame.getBoundingClientRect();
+    return frame.width + 2 * MARGIN_PX <= window.innerWidth && frame.height + 2 * MARGIN_PX <= window.innerHeight;
+  };
+  screen = createScreen(canvas, readPalette(token => getComputedStyle(document.documentElement).getPropertyValue(token)), window, fits);
 } catch {
   showFallback(canvas);
 }
@@ -91,12 +99,14 @@ const LABELS: Readonly<Record<Step, string>> = {
   'today-results': `Today's results. ${prompts.verb} to run the same day with a central hub.`,
   hub: `Shop scene, ${SCENARIO_TITLES.hub}. ${prompts.verb} to skip ahead. ${controlHint}`,
   comparison: `Comparison of today and with a central hub. ${prompts.verb} to replay this day, or use ${reshuffleHint} to reshuffle the day.`,
+  'style-frame': `Style frame: the shop at a decisive moment, a still for judging the look. ${prompts.verb} for the title.`,
 };
 
 if (screen) {
   const s = screen;
   const link = fromQuery(key => new URLSearchParams(location.search).get(key));
   let flow = link.flow;
+  const moment = link.moment ?? 'dilemma';
   let baseDay = comparison;
   let day = comparison;
   let controlOn = false;
@@ -172,6 +182,7 @@ if (screen) {
     if (flow.step === 'settings') announce(settingsText());
     if (flow.step === 'today-results') announce(resultsAnnouncement(day.today.metrics));
     if (flow.step === 'comparison') announce(comparisonAnnouncement(day, savings(day)));
+    if (flow.step === 'style-frame') announce(styleFrame(moment, params).text);
   };
 
   const pendingNow = (): Decision | null => (controlOn ? (run?.pending ?? null) : null);
@@ -236,6 +247,7 @@ if (screen) {
     else if (flow.step === 'settings') drawSettings(s.rect, editor, remembered);
     else if (flow.step === 'today-results') drawResults(s.rect, todayRows(day.today.metrics), day.today.metrics.salesLostGbp === 0, prompts.results);
     else if (flow.step === 'comparison') drawComparison(s.rect, comparisonRows(day), savingsRows(day, savings(day)), prompts.comparison);
+    else if (flow.step === 'style-frame') drawShop(s.rect, {...styleFrame(moment, params), sound: sfx.on});
     else if (scenario) {
       const minute = replayMinute(now);
       const state = replayState(day[scenario].timeline, params.staff, params.shiftMinutes, minute);

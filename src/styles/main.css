@@ -2,8 +2,8 @@ html,
 body {
   margin: 0;
   height: 100%;
-  background: var(--gb-0);
-  color: var(--gb-3);
+  background: var(--page);
+  color: var(--px-cream);
 }
 
 .stage {
@@ -38,7 +38,7 @@ body {
   max-width: 32rem;
   padding: 1rem;
   font: 1rem/1.5 monospace;
-  color: var(--gb-3);
+  color: var(--px-cream);
 }
 
 /* Taps drive the pitch, so the browser must not turn them into zooms or scrolls. */
@@ -51,6 +51,7 @@ body {
 
 .screen-wrap {
   position: relative;
+  width: max-content;
   line-height: 0;
 }
 
@@ -67,10 +68,10 @@ body {
   min-width: 44px;
   min-height: 44px;
   padding: 0 12px;
-  border: 2px solid var(--gb-2);
+  border: 2px solid var(--px-ink);
   border-radius: 0;
-  background: var(--gb-1);
-  color: var(--gb-3);
+  background: var(--px-plum);
+  color: var(--px-cream);
   font: bold 14px/1 monospace;
   letter-spacing: 1px;
   touch-action: manipulation;
@@ -78,12 +79,12 @@ body {
 }
 
 .controls button:active {
-  background: var(--gb-2);
-  color: var(--gb-0);
+  background: var(--px-yellow);
+  color: var(--px-ink);
 }
 
 .controls button:focus-visible {
-  outline: 3px solid var(--gb-3);
+  outline: 3px solid var(--px-yellow);
   outline-offset: 2px;
 }
 
@@ -116,4 +117,174 @@ body[data-step='settings'] #increase {
 
 .controls button[aria-disabled='true'] {
   opacity: 0.5;
+}
+
+/*
+ * The handheld console drawn around the screen. Its size is measured at run time and taken off
+ * the viewport before the screen picks its whole-pixel scale, so the frame can change shape freely.
+ */
+.console {
+  display: grid;
+  grid-template-areas:
+    'bezel bezel bezel'
+    'dpad pills ab';
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px 8px;
+  padding: 10px 10px 18px;
+  border-radius: 22px;
+  background: var(--shell);
+  box-shadow:
+    inset -4px -4px 0 var(--shell-shade),
+    0 6px 0 var(--shell-dark);
+}
+
+.bezel {
+  grid-area: bezel;
+  justify-self: center;
+  padding: 6px 14px 4px;
+  border-radius: 12px;
+  background: var(--bezel);
+}
+
+.bezel-top {
+  display: flex;
+  overflow: hidden;
+  align-items: center;
+  gap: 5px;
+  height: 14px;
+  font: bold 8px/1 monospace;
+  letter-spacing: 1px;
+  color: var(--px-mist);
+}
+
+.led {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--led-on);
+  box-shadow: 0 0 6px var(--led-on);
+}
+
+.swatches {
+  display: flex;
+  gap: 3px;
+  margin-left: auto;
+}
+
+.swatches i {
+  width: 10px;
+  height: 4px;
+  background: var(--px-red);
+}
+
+.swatches i:nth-child(2) {
+  background: var(--px-orange);
+}
+
+.swatches i:nth-child(3) {
+  background: var(--px-yellow);
+}
+
+.swatches i:nth-child(4) {
+  background: var(--px-leaf);
+}
+
+.swatches i:nth-child(5) {
+  background: var(--px-sky);
+}
+
+.swatches i:nth-child(6) {
+  background: var(--px-pink);
+}
+
+.brand {
+  overflow: hidden;
+  white-space: nowrap;
+  margin: 0;
+  height: 16px;
+  font: bold 11px/16px monospace;
+  letter-spacing: 3px;
+  text-align: center;
+  color: var(--px-mist);
+}
+
+.dpad {
+  grid-area: dpad;
+  justify-self: start;
+  position: relative;
+  width: 54px;
+  height: 54px;
+  margin-left: 8px;
+}
+
+.dpad::before,
+.dpad::after {
+  content: '';
+  position: absolute;
+  border-radius: 3px;
+  background: var(--px-ink);
+}
+
+.dpad::before {
+  inset: 18px 0;
+}
+
+.dpad::after {
+  inset: 0 18px;
+}
+
+.pills {
+  grid-area: pills;
+  display: flex;
+  gap: 10px;
+  align-self: end;
+  font: bold 7px/1 monospace;
+  letter-spacing: 1px;
+  color: var(--bezel);
+}
+
+.pills span {
+  padding-top: 10px;
+  background: linear-gradient(var(--shell-dark), var(--shell-dark)) top / 34px 7px no-repeat;
+  border-radius: 4px;
+}
+
+.ab {
+  grid-area: ab;
+  justify-self: end;
+  display: flex;
+  gap: 10px;
+  margin-right: 6px;
+  transform: rotate(-20deg);
+}
+
+.ab span {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--button-a);
+  box-shadow: 0 3px 0 var(--px-ink);
+}
+
+.ab span:last-child {
+  margin-top: -14px;
+}
+
+/* A phone on its side: the controls flank the screen so it can stay large. */
+@media (orientation: landscape) and (max-height: 600px) {
+  .console {
+    grid-template-areas:
+      'dpad bezel ab'
+      'pills bezel ab';
+    grid-template-columns: auto auto auto;
+    padding: 8px 14px;
+  }
+
+  .pills {
+    flex-direction: column;
+    align-self: start;
+  }
 }

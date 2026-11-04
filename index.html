@@ -11,20 +11,32 @@
 <body>
   <main class="stage">
     <h1 class="visually-hidden">PAINT RUSH</h1>
-    <div class="screen-wrap">
-      <canvas id="screen" role="img" aria-label="PAINT RUSH title screen. Press space to start."></canvas>
-      <div class="controls">
-        <button type="button" id="open-settings" hidden>SETTINGS</button>
-        <button type="button" id="decrease" aria-label="Decrease value" hidden>-</button>
-        <button type="button" id="increase" aria-label="Increase value" hidden>+</button>
-        <button type="button" id="walk-in" hidden>SERVE WALK-IN</button>
-        <button type="button" id="order" hidden>MIX ORDER</button>
-        <button type="button" id="control" hidden>TAKE CONTROL</button>
-        <button type="button" id="reshuffle" hidden>RESHUFFLE</button>
-        <button type="button" id="sound">SOUND OFF</button>
-        <button type="button" id="reset" hidden>RESET</button>
-        <button type="button" id="back" hidden>BACK</button>
+    <div class="console">
+      <div class="bezel">
+        <div class="bezel-top" aria-hidden="true">
+          <span class="led"></span><span class="bezel-label">POWER</span>
+          <span class="swatches"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+        </div>
+        <div class="screen-wrap">
+          <canvas id="screen" role="img" aria-label="PAINT RUSH title screen. Press space to start."></canvas>
+          <div class="controls">
+            <button type="button" id="open-settings" hidden>SETTINGS</button>
+            <button type="button" id="decrease" aria-label="Decrease value" hidden>-</button>
+            <button type="button" id="increase" aria-label="Increase value" hidden>+</button>
+            <button type="button" id="walk-in" hidden>SERVE WALK-IN</button>
+            <button type="button" id="order" hidden>MIX ORDER</button>
+            <button type="button" id="control" hidden>TAKE CONTROL</button>
+            <button type="button" id="reshuffle" hidden>RESHUFFLE</button>
+            <button type="button" id="sound">SOUND OFF</button>
+            <button type="button" id="reset" hidden>RESET</button>
+            <button type="button" id="back" hidden>BACK</button>
+          </div>
+        </div>
+        <p class="brand" aria-hidden="true">PAINT RUSH</p>
       </div>
+      <div class="dpad" aria-hidden="true"><span></span></div>
+      <div class="pills" aria-hidden="true"><span>MENU</span><span>PLAY</span></div>
+      <div class="ab" aria-hidden="true"><span></span><span></span></div>
     </div>
     <p class="visually-hidden" id="prompt" aria-live="polite">PRESS SPACE</p>
   </main>

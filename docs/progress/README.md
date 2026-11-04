@@ -19,3 +19,4 @@ Visual artefacts that have been superseded, kept in running order so this folder
 - `06-tap-input-screenshots/` - the full screenshot set as `tap-input` left it, archived when `settings` added the menu screen.
 - `07-settings-screenshots/` - the full screenshot set as `settings` left it, archived when `take-control` added the take-control button to the replay.
 - `08-take-control-screenshots/` - the full screenshot set as `take-control` left it, archived when `chiptune-sound` added the sound button and the status bar speaker.
+- `09-v1-screenshots/` - the full v1 screenshot set, four greens and 8-pixel sprites, as `chiptune-sound` left it, archived when `v2-style-frame` redrew the shop in colour.

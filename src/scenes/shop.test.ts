@@ -1,17 +1,20 @@
 import {describe, expect, test} from 'bun:test';
 
 import type {Plot} from '../render/font';
+import {isShade} from '../render/palette';
 import {replayState, type ReplayState, type StaffView} from '../render/replay';
 import {SCREEN_HEIGHT, SCREEN_WIDTH} from '../render/screen-size';
 import {compare} from '../sim/engine';
 import {DEFAULT_PARAMS, type ScenarioName} from '../sim/params';
 import {BAY, DOOR_SPOT, drawShop, FLOOR, inside, LOSS_MINUTES, QUEUE_SLOTS, type Rect, staffPosition, SPEAKER, VAN_MINUTES, WALK_MINUTES} from './shop';
 
-/** Renders into a shade buffer, failing on any plot outside the screen or outside the four shades. */
+const UNDRAWN = 255;
+
+/** Renders into a shade buffer, failing on any plot outside the screen or outside the palette. */
 function render(state: ReplayState, scenario: ScenarioName = 'today', text = 'HELLO', sound = false): Uint8Array {
-  const buf = new Uint8Array(SCREEN_WIDTH * SCREEN_HEIGHT).fill(9);
+  const buf = new Uint8Array(SCREEN_WIDTH * SCREEN_HEIGHT).fill(UNDRAWN);
   const plot: Plot = (x, y, w, h, shade) => {
-    if (x < 0 || y < 0 || x + w > SCREEN_WIDTH || y + h > SCREEN_HEIGHT || ![0, 1, 2, 3].includes(shade)) {
+    if (x < 0 || y < 0 || x + w > SCREEN_WIDTH || y + h > SCREEN_HEIGHT || !isShade(shade)) {
       throw new Error(`plot out of bounds: ${[x, y, w, h, shade].join(',')}`);
     }
     for (let yy = y; yy < y + h; yy++) buf.fill(shade, yy * SCREEN_WIDTH + x, yy * SCREEN_WIDTH + x + w);
@@ -46,18 +49,18 @@ describe('shop scene', () => {
     const state = replayState(compare(1, DEFAULT_PARAMS).today.timeline, 2, DEFAULT_PARAMS.shiftMinutes, 10);
     const region = (buf: Uint8Array): number[] => {
       const out: number[] = [];
-      for (let y = SPEAKER.y; y < SPEAKER.y + SPEAKER.h; y++) for (let x = SPEAKER.x; x < SPEAKER.x + SPEAKER.w; x++) out.push(buf[y * SCREEN_WIDTH + x] ?? 9);
+      for (let y = SPEAKER.y; y < SPEAKER.y + SPEAKER.h; y++) for (let x = SPEAKER.x; x < SPEAKER.x + SPEAKER.w; x++) out.push(buf[y * SCREEN_WIDTH + x] ?? UNDRAWN);
       return out;
     };
     expect(region(render(state, 'today', 'HELLO', true))).not.toEqual(region(render(state, 'today', 'HELLO', false)));
   });
 
-  test('every frame of a replay fills the screen in the four shades and stays on it', () => {
+  test('every frame of a replay fills the screen in palette colours and stays on it', () => {
     const c = compare(1, DEFAULT_PARAMS);
     for (const run of [c.today, c.hub]) {
       for (let m = 0; m <= DEFAULT_PARAMS.shiftMinutes + 5; m += 1.7) {
         const buf = render(replayState(run.timeline, DEFAULT_PARAMS.staff, DEFAULT_PARAMS.shiftMinutes, m), run.scenario);
-        expect(buf.includes(9)).toBe(false);
+        expect(buf.includes(UNDRAWN)).toBe(false);
       }
     }
   });

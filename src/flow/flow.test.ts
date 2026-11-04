@@ -50,4 +50,12 @@ describe('the pitch flow', () => {
     expect(fromQuery(query('scene=settings')).flow).toEqual({step: 'settings', seed: DEFAULT_SEED});
     expect(fromQuery(query('scene=nope')).flow.step).toBe('title');
   });
+
+  test('the style frame opens on the dilemma unless another still is named, and SPACE leaves it for the title', () => {
+    expect(fromQuery(query('scene=style-frame'))).toEqual({flow: {step: 'style-frame', seed: DEFAULT_SEED}, minute: 0, moment: 'dilemma'});
+    expect(fromQuery(query('scene=style-frame&moment=unmanned')).moment).toBe('unmanned');
+    expect(fromQuery(query('scene=style-frame&moment=nope')).moment).toBe('dilemma');
+    expect(advance({step: 'style-frame', seed: 3})).toEqual({step: 'title', seed: 3});
+    expect(replayOf('style-frame')).toBeNull();
+  });
 });
