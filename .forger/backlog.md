@@ -6,16 +6,16 @@ Plan: [docs/plan-paint-rush.md](../docs/plan-paint-rush.md). `backlog.json` is t
 
 - `scaffold` - project scaffold, Game Boy canvas, offline single-file build.
 - `sim-engine` - deterministic simulation of the today and hub scenarios (after scaffold).
-- `shop-scene` - animated replay of one scenario (after sim-engine). Needs owner approval of its wireframe.
-- `two-run-results` - title, today, results, hub, comparison (after shop-scene). Needs owner approval of its wireframe.
+- `shop-scene` - animated replay of one scenario (after sim-engine). Wireframe approved.
+- `two-run-results` - title, today, results, hub, comparison (after shop-scene). Wireframe approved.
 
 ## P1
 
-- `settings` - menu to edit every parameter (after two-run-results). Needs owner approval of its wireframe.
+- `settings` - menu to edit every parameter (after two-run-results). Wireframe approved.
 
 ## P2
 
 - `take-control` - presenter decides what staff do next (after shop-scene).
 - `chiptune-sound` - synthesised sound effects, muted by default (after shop-scene).
 
-Release a wireframe-gated ticket by changing its status from `needs_human` to `not_started`.
+Wireframes for shop-scene, two-run-results and settings are approved.

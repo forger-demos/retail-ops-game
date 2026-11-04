@@ -50,7 +50,7 @@
     },
     "shop-scene": {
       "priority": "P0",
-      "status": "needs_human",
+      "status": "not_started",
       "type": "feature",
       "depends_on": ["scaffold", "sim-engine"],
       "effort": "large",
@@ -70,7 +70,7 @@
     },
     "two-run-results": {
       "priority": "P0",
-      "status": "needs_human",
+      "status": "not_started",
       "type": "feature",
       "depends_on": ["shop-scene"],
       "effort": "medium",
@@ -90,7 +90,7 @@
     },
     "settings": {
       "priority": "P1",
-      "status": "needs_human",
+      "status": "not_started",
       "type": "feature",
       "depends_on": ["two-run-results"],
       "effort": "medium",
