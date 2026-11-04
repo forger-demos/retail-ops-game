@@ -6,6 +6,8 @@ import {expect, type Page, test} from '@playwright/test';
 
 const BUILD = join(import.meta.dirname, '../../dist/paint-rush.html');
 const URL = pathToFileURL(BUILD).href;
+/** The autoplay pitch: SPACE on its title goes straight to the full-shift replay. */
+const PRESENTER = `${URL}?mode=presenter`;
 
 test.beforeAll(() => {
   if (!existsSync(BUILD)) throw new Error(`${BUILD} is missing; run \`bun run build\` first`);
@@ -22,7 +24,7 @@ async function spaceUntil(page: Page, target: string): Promise<void> {
 test('SPACE walks the whole pitch in order, and the comparison replays the same day', async ({page}) => {
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
-  await page.goto(URL);
+  await page.goto(PRESENTER);
   const order: string[] = [String(await step(page))];
   for (const target of ['today', 'today-results', 'hub', 'comparison']) {
     await spaceUntil(page, target);

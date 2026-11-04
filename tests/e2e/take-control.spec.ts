@@ -6,6 +6,8 @@ import {expect, type Page, test} from '@playwright/test';
 
 const BUILD = join(import.meta.dirname, '../../dist/paint-rush.html');
 const URL = pathToFileURL(BUILD).href;
+/** The autoplay pitch: SPACE on its title goes straight to the full-shift replay. */
+const PRESENTER = `${URL}?mode=presenter`;
 const DECISION = 'W: SERVE THE WALK-IN. O: MIX THE ORDER.';
 
 test.beforeAll(() => {
@@ -27,7 +29,7 @@ async function reachDecision(page: Page): Promise<void> {
 test('C asks the presenter at a decision, and a pick resumes the shift', async ({page}) => {
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
-  await page.goto(URL);
+  await page.goto(PRESENTER);
   await reachDecision(page);
   await expect(page.getByRole('button', {name: 'SERVE WALK-IN'})).toBeVisible();
   await page.keyboard.press('KeyO');
@@ -37,14 +39,14 @@ test('C asks the presenter at a decision, and a pick resumes the shift', async (
 });
 
 test('the on-screen buttons make the pick', async ({page}) => {
-  await page.goto(URL);
+  await page.goto(PRESENTER);
   await reachDecision(page);
   await page.getByRole('button', {name: 'SERVE WALK-IN'}).click();
   await expect(page.locator('#prompt')).not.toHaveText(DECISION);
 });
 
 test('doing nothing falls back to autoplay', async ({page}) => {
-  await page.goto(URL);
+  await page.goto(PRESENTER);
   await reachDecision(page);
   await expect(page.locator('#prompt')).not.toHaveText(DECISION, {timeout: 9000});
 });

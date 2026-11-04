@@ -1,6 +1,7 @@
 import {describe, expect, test} from 'bun:test';
 
 import {DEFAULT_PARAMS} from '../sim/params';
+import {DEFAULT_ROUND_SECONDS} from '../sim/round';
 import {
   change,
   DEFAULT_SETTINGS,
@@ -36,6 +37,7 @@ describe('settings fields', () => {
       const changed = [
         ...Object.keys(DEFAULT_PARAMS).filter(k => JSON.stringify(next.params[k as keyof typeof next.params]) !== JSON.stringify(DEFAULT_PARAMS[k as keyof typeof DEFAULT_PARAMS])),
         ...(next.timeScale !== DEFAULT_SETTINGS.timeScale ? ['timeScale'] : []),
+        ...(next.roundSeconds !== DEFAULT_SETTINGS.roundSeconds ? ['roundSeconds'] : []),
       ];
       expect({id: f.id, changed: changed.length}).toEqual({id: f.id, changed: 1});
     }
@@ -72,6 +74,12 @@ describe('the menu editor', () => {
   test('shift length is edited in hours and time scale feeds the replay speed', () => {
     expect(change(on('shiftHours'), 1).settings.params.shiftMinutes).toBe(9 * 60);
     expect(change(on('timeScale'), 1).settings.timeScale).toBe(DEFAULT_SETTINGS.timeScale + 1);
+  });
+
+  test('the round length is edited in seconds, from the default round', () => {
+    expect(DEFAULT_SETTINGS.roundSeconds).toBe(DEFAULT_ROUND_SECONDS);
+    expect(change(on('roundSeconds'), 1).settings.roundSeconds).toBe(DEFAULT_ROUND_SECONDS + 5);
+    expect(describeRow(on('roundSeconds'))).toBe(`ROUND LENGTH: ${DEFAULT_ROUND_SECONDS} SEC`);
   });
 
   test('order sizes that do not total 100 are a problem; fixing them clears it', () => {

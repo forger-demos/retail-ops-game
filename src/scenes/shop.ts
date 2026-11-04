@@ -91,6 +91,12 @@ export interface ShopView {
   sound: boolean;
   /** What the customer at the till is asking for, shown in a speech bubble. */
   bubble?: string;
+  /** Replaces the scenario name in the status bar. */
+  title?: string;
+  /** Replaces the wall clock in the status bar. */
+  clock?: string;
+  /** A mix-order customer waiting at the till, with the tins they want in a speech bubble. */
+  till?: {customer: number; tins: number};
 }
 
 function clip(plot: Plot, r: Rect): Plot {
@@ -112,8 +118,8 @@ function drawStatus(plot: Plot, view: ShopView): void {
   const {state, params} = view;
   plot(STATUS.x, STATUS.y, STATUS.w, STATUS.h, C.plum);
   plot(STATUS.x, STATUS.y + STATUS.h - 1, STATUS.w, 1, C.ink);
-  const clock = clockText(state.minute, params.shiftMinutes);
-  drawText(plot, SCENARIO_TITLES[view.scenario], 2, 3, C.cream);
+  const clock = view.clock ?? clockText(state.minute, params.shiftMinutes);
+  drawText(plot, view.title ?? SCENARIO_TITLES[view.scenario], 2, 3, C.cream);
   drawText(plot, clock, SCREEN_WIDTH - 2 - textWidth(clock), 3, C.cream);
   drawText(plot, `SERVED ${state.served}`, 2, 11, C.mint);
   const lost = `LOST ${state.lost} GBP${state.lostGbp}`;
@@ -298,9 +304,8 @@ function drawBanner(plot: Plot): void {
   drawText(plot, UNMANNED, BANNER.x + Math.floor((BANNER.w - textWidth(UNMANNED)) / 2), BANNER.y + 3, C.cream);
 }
 
-/** A speech bubble beside the customer at the first till, its tail pointing at their face; it keeps clear of the back wall. */
-function drawBubble(plot: Plot, text: string): void {
-  const at = servedSpot(0);
+/** A speech bubble beside a customer at the till, its tail pointing at their face; it keeps clear of the back wall. */
+function drawBubble(plot: Plot, text: string, at: Point = servedSpot(0)): void {
   const w = textWidth(text) + 6;
   const x = Math.max(FLOOR.x + 1, at.x - w - 2);
   const y = at.y + 1;
@@ -313,6 +318,17 @@ function drawBubble(plot: Plot, text: string): void {
   drawText(plot, text, x + 3, y + 2, C.ink);
 }
 
+/** The order customer waits at the till, and steps one place along while a walk-in is served there. */
+export function tillSpot(state: ReplayState): Point {
+  return servedSpot(state.serving.some(s => s.staff === 0) ? 1 : 0);
+}
+
+function drawTill(plot: Plot, state: ReplayState, till: {customer: number; tins: number}): void {
+  const at = tillSpot(state);
+  person(plot, customerSprite(till.customer), at);
+  drawBubble(plot, `${till.tins} ${till.tins === 1 ? 'TIN' : 'TINS'}`, at);
+}
+
 export function drawShop(plot: Plot, view: ShopView): void {
   drawStatus(plot, view);
   drawFloor(plot);
@@ -320,6 +336,7 @@ export function drawShop(plot: Plot, view: ShopView): void {
   drawBay(plot, view);
   drawCustomers(plot, view);
   drawStaff(plot, view);
+  if (view.till) drawTill(plot, view.state, view.till);
   if (staffOnFloor(view.state) === 0) drawBanner(plot);
   if (view.bubble) drawBubble(plot, view.bubble);
   drawTextbox(plot, view.text, view.chars);
