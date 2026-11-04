@@ -15,7 +15,9 @@ export interface Prompts {
   controlOff: string;
   /** Under a round's result: what SPACE or a tap goes to next. */
   round1Result: string;
-  round2Result: string;
+  /** Under the round comparison, and under the card that introduces the whole real day. */
+  roundsResult: string;
+  wholeDay: string;
   /** What the canvas label tells a screen reader about the play buttons. */
   playHint: string;
 }
@@ -31,7 +33,8 @@ const PROMPTS: Readonly<Record<InputMode, Prompts>> = {
     controlOn: 'YOU DECIDE WHO IS NEXT. C: BACK TO AUTOPLAY.',
     controlOff: 'AUTOPLAY. C: TAKE CONTROL.',
     round1Result: 'SPACE: PLAY AGAIN, NOW WITH THE HUB.',
-    round2Result: 'SPACE: NOW A WHOLE REAL DAY.',
+    roundsResult: 'SPACE: NOW A WHOLE REAL DAY.',
+    wholeDay: 'SPACE: PLAY THE WHOLE DAY.',
     playHint: 'Press 1 to serve, 2 to mix the order, 3 to send it to the hub, or use the buttons.',
   },
   touch: {
@@ -44,7 +47,8 @@ const PROMPTS: Readonly<Record<InputMode, Prompts>> = {
     controlOn: 'YOU DECIDE WHO IS NEXT. TAP AUTOPLAY TO STOP.',
     controlOff: 'AUTOPLAY. TAP TAKE CONTROL TO DECIDE.',
     round1Result: 'TAP: PLAY AGAIN, NOW WITH THE HUB.',
-    round2Result: 'TAP: NOW A WHOLE REAL DAY.',
+    roundsResult: 'TAP: NOW A WHOLE REAL DAY.',
+    wholeDay: 'TAP: PLAY THE WHOLE DAY.',
     playHint: 'Use the serve, mix and send to hub buttons.',
   },
 };

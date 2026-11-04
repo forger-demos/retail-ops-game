@@ -23,7 +23,8 @@
 - **Time unmanned** - shop minutes in a round with nobody on the floor.
 - **Play mode** - the default experience: the audience is the shop assistant and chooses every action.
 - **Presenter mode** - the v1 autoplay flow, for narrating without playing.
-- **Debrief** - after the rounds: the full-shift simulation of today vs hub and the extrapolation.
+- **Debrief** - after the rounds: the round comparison, then the whole real day, the full-shift simulation of today vs hub on autoplay, and the extrapolation.
+- **Round comparison** - the two rounds side by side, as played, and which made more in sales.
 - **Style frame** - one finished frame of the real look, approved by the owner before the screens are built on it.
 - **Juice** - feedback for a player action: something moves, something sounds, something changes on screen.
 - **Customer type** - what a walk-in wants: colour advice, a sample pot, a small purchase, or a mix order.

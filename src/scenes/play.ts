@@ -78,7 +78,38 @@ export function roundRows(n: RoundNumber, r: RoundResult): Row[] {
   return rows;
 }
 
+export const ROUNDS_TITLE = 'ROUND 1 VS ROUND 2';
+export const ROUND_HEADINGS = ['ROUND 1', 'ROUND 2'] as const;
+
+/** The two rounds side by side; labels are short so two columns of figures fit beside them. */
+export function roundComparisonRows(r1: RoundResult, r2: RoundResult): Row[] {
+  return [
+    {label: 'SALES MADE', values: [formatGbp(r1.capturedGbp), formatGbp(r2.capturedGbp)]},
+    {label: 'WALKED OUT', values: [String(r1.walkedOut), String(r2.walkedOut)]},
+    {label: 'UNMANNED', values: [`${r1.unmannedMinutes} MIN`, `${r2.unmannedMinutes} MIN`]},
+  ];
+}
+
+/** What the hub changed between the rounds, measured in sales; the sign decides the wording. */
+export function roundsVerdict(r1: RoundResult, r2: RoundResult): Row {
+  const gained = r2.capturedGbp - r1.capturedGbp;
+  if (gained > 0) return {label: 'THE HUB WON', values: [`+${formatGbp(gained)}`]};
+  if (gained < 0) return {label: 'ROUND 1 WON', values: [`+${formatGbp(-gained)}`]};
+  return {label: 'NO DIFFERENCE', values: []};
+}
+
+export const ROUNDS_NOTE = 'TWO SHORT ROUNDS. NEXT, A WHOLE SHIFT.';
+
 const gbp = (n: number): string => `GBP${n.toLocaleString('en-GB')}`;
+
+export function roundsAnnouncement(r1: RoundResult, r2: RoundResult, next: string): string {
+  const gained = r2.capturedGbp - r1.capturedGbp;
+  const verdict =
+    gained > 0 ? `With the hub you made ${gbp(gained)} more in sales.` : gained < 0 ? `Round 1 made ${gbp(-gained)} more in sales.` : 'Both rounds made the same sales.';
+  const round = (n: RoundNumber, r: RoundResult): string =>
+    `Round ${n}: ${gbp(r.capturedGbp)} in sales made, ${r.walkedOut} customers walked out, ${r.unmannedMinutes} shop minutes unmanned.`;
+  return `Round 1 against round 2. ${round(1, r1)} ${round(2, r2)} ${verdict} ${next}`;
+}
 
 export function roundAnnouncement(n: RoundNumber, r: RoundResult, next: string): string {
   const hub = n === 2 ? ` ${r.tinsSentToHub} tins sent to the hub.` : '';

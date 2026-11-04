@@ -7,7 +7,7 @@ describe('prompts', () => {
   test('the keyboard says SPACE and touch says TAP', () => {
     expect(promptsFor('keyboard').title).toBe('PRESS SPACE');
     expect(promptsFor('touch').title).toContain('TAP');
-    for (const key of ['title', 'results', 'comparison', 'round1Result', 'round2Result'] as const) {
+    for (const key of ['title', 'results', 'comparison', 'round1Result', 'roundsResult', 'wholeDay'] as const) {
       expect(promptsFor('touch')[key]).toContain('TAP');
       expect(promptsFor('touch')[key]).not.toContain('SPACE');
     }
@@ -16,7 +16,7 @@ describe('prompts', () => {
 
   test('every text-box prompt fits the box', () => {
     for (const mode of ['keyboard', 'touch'] as const) {
-      for (const key of ['results', 'comparison', 'decision', 'controlOn', 'controlOff', 'round1Result', 'round2Result'] as const) expect(wrap(promptsFor(mode)[key]).length).toBeLessThanOrEqual(TEXTBOX_LINES);
+      for (const key of ['results', 'comparison', 'decision', 'controlOn', 'controlOff', 'round1Result', 'roundsResult', 'wholeDay'] as const) expect(wrap(promptsFor(mode)[key]).length).toBeLessThanOrEqual(TEXTBOX_LINES);
     }
   });
 

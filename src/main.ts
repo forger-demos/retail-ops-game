@@ -1,4 +1,4 @@
-import {advance, closeSettings, fromQuery, openSettings, replayOf, reshuffle, roundOf, roundResultOf, roundScenario, type FlowState, type RoundNumber, type Step} from './flow/flow';
+import {advance, closeSettings, controlAllowed, fromQuery, modeOf, openSettings, replayOf, reshuffle, roundOf, roundResultOf, roundScenario, toggleMode, type FlowState, type RoundNumber, type Step} from './flow/flow';
 import {type Action, keyAction, REPEATABLE, tapAccepted} from './flow/input';
 import {change, describe, type Editor, moveCursor, openEditor, problem, resetToDefaults, selectVisible} from './flow/settings';
 import {loadSettings, openStorage, saveSettings} from './flow/settings-store';
@@ -12,11 +12,12 @@ import {createScreen, type Screen} from './render/screen';
 import {comparisonAnnouncement, comparisonRows, resultsAnnouncement, savingsRows, todayRows} from './render/results';
 import {revealed} from './render/textbox';
 import {fallbackLines, FALLBACK_HEADLINE} from './scenes/fallback';
-import {drawComparison, drawResults} from './scenes/results';
-import {playView, RESULT_TITLES, roundAnnouncement, roundRows} from './scenes/play';
+import {drawComparison, drawResults, drawTable} from './scenes/results';
+import {playView, RESULT_TITLES, ROUND_HEADINGS, roundAnnouncement, roundComparisonRows, roundRows, ROUNDS_NOTE, ROUNDS_TITLE, roundsAnnouncement, roundsVerdict} from './scenes/play';
 import {drawShop} from './scenes/shop';
 import {styleFrame} from './scenes/style-frame';
 import {drawTitle, promptVisible} from './scenes/title';
+import {drawWholeDay, wholeDayAnnouncement} from './scenes/whole-day';
 import {DEFAULT_SEED} from './sim/cli';
 import {runControlled, type ControlledRun} from './sim/control';
 import {drawArrivals} from './sim/arrivals';
@@ -41,6 +42,7 @@ if (!canvas || !prompt || !stage || !consoleFrame) throw new Error('#screen, #pr
 const MARGIN_PX = 12;
 const reshuffleButton = button('reshuffle');
 const controlButton = button('control');
+const modeButton = button('mode');
 const soundButton = button('sound');
 const pickButtons: Readonly<Record<Choice, HTMLButtonElement>> = {'walk-in': button('walk-in'), order: button('order')};
 const actions = document.querySelector<HTMLElement>('.actions');
@@ -100,8 +102,13 @@ const reshuffleHint = mode === 'touch' ? 'the reshuffle button' : 'R';
 const controlHint = mode === 'touch' ? 'Use the take control button to decide who is served next.' : 'Press C to take control of who is served next.';
 const settingsHint = mode === 'touch' ? 'Use the settings button for settings.' : 'Press S for settings, M for sound.';
 
-const LABELS: Readonly<Record<Step, string>> = {
-  title: `PAINT RUSH title screen. ${prompts.verb} to start. ${settingsHint}`,
+const modeHint = mode === 'touch' ? 'Use the mode button to switch between play and presenter.' : 'Up and down switch between play and presenter.';
+const MODE_TEXT = {
+  play: 'Play mode: you play two short rounds as the shop assistant, then watch a whole real day.',
+  presenter: 'Presenter mode: the whole real day on autoplay, for narrating.',
+} as const;
+
+const LABELS: Readonly<Record<Exclude<Step, 'title'>, string>> = {
   settings: 'Settings menu. Up and down choose a setting, left and right or the minus and plus buttons change it, back returns to the title.',
   today: `Shop scene, ${SCENARIO_TITLES.today}. ${prompts.verb} to skip ahead. ${controlHint}`,
   'today-results': `Today's results. ${prompts.verb} to run the same day with a central hub.`,
@@ -111,8 +118,16 @@ const LABELS: Readonly<Record<Step, string>> = {
   'round-1': `Round 1, today: you are the shop assistant and every order is mixed in store. ${prompts.playHint}`,
   'round-1-result': `Round 1 result. ${prompts.verb} to play again with the central hub.`,
   'round-2': `Round 2, with the hub: large orders can be sent to the hub. ${prompts.playHint}`,
-  'round-2-result': `Round 2 result. ${prompts.verb} to see a whole real day.`,
+  'round-comparison': `Round 1 against round 2. ${prompts.verb} to see a whole real day.`,
+  'whole-day': `Now a whole real day. ${prompts.verb} to play it, first as today, then with the hub.`,
 };
+
+/** The whole day in play mode is autoplay only, so its labels do not offer take-control. */
+function labelFor(state: FlowState): string {
+  if (state.step === 'title') return `PAINT RUSH title screen. ${MODE_TEXT[modeOf(state)]} ${prompts.verb} to start. ${modeHint} ${settingsHint}`;
+  const label = LABELS[state.step];
+  return replayOf(state.step) && !state.presenter ? label.replace(` ${controlHint}`, '') : label;
+}
 
 /** A round being played: its presses so far, and the round they give. */
 interface Playing {
@@ -174,7 +189,9 @@ if (screen) {
     for (const b of [buttons.decrease, buttons.increase, buttons.reset, buttons.back]) b.hidden = !inMenu;
     reshuffleButton.hidden = flow.step !== 'comparison' && !inMenu;
     const replaying = replayOf(flow.step) !== null;
-    controlButton.hidden = !replaying;
+    modeButton.hidden = flow.step !== 'title';
+    modeButton.textContent = `MODE: ${modeOf(flow).toUpperCase()}`;
+    controlButton.hidden = !controlAllowed(flow);
     controlButton.textContent = controlOn ? 'AUTOPLAY' : 'TAKE CONTROL';
     controlButton.setAttribute('aria-pressed', String(controlOn));
     for (const b of Object.values(pickButtons)) b.hidden = !(replaying && deciding());
@@ -191,6 +208,7 @@ if (screen) {
     }
     if (next.step === 'settings' && flow.step !== 'settings') editor = openEditor(settings);
     flow = next;
+    if (!flow.presenter) controlOn = false;
     const n = roundOf(next.step);
     playing = null;
     if (n) {
@@ -209,18 +227,20 @@ if (screen) {
     }
     start = now - msFor(minute);
     heardTo = minute;
-    canvas.setAttribute('aria-label', LABELS[flow.step]);
+    canvas.setAttribute('aria-label', labelFor(flow));
     const resultOf = roundResultOf(flow.step);
     document.body.dataset.scene = replayOf(flow.step) ? 'shop' : flow.step === 'today-results' ? 'results' : n ? 'play' : resultOf ? 'round-result' : flow.step;
     document.body.dataset.step = flow.step;
     document.body.dataset.seed = String(flow.seed);
     syncControls();
-    if (flow.step === 'title') announce(prompts.title);
+    if (flow.step === 'title') announce(`${prompts.title}. ${MODE_TEXT[modeOf(flow)]}`);
     if (flow.step === 'settings') announce(settingsText());
     if (flow.step === 'today-results') announce(resultsAnnouncement(day.today.metrics));
     if (flow.step === 'comparison') announce(comparisonAnnouncement(day, savings(day)));
     if (flow.step === 'style-frame') announce(styleFrame(moment, params).text);
-    if (resultOf) announce(roundAnnouncement(resultOf, resultFor(resultOf), LABELS[flow.step]));
+    if (resultOf) announce(roundAnnouncement(resultOf, resultFor(resultOf), labelFor(flow)));
+    if (flow.step === 'round-comparison') announce(roundsAnnouncement(resultFor(1), resultFor(2), `${prompts.verb} to see a whole real day.`));
+    if (flow.step === 'whole-day') announce(wholeDayAnnouncement(`${prompts.verb} to play it.`));
   };
 
   /** A round's result; one reached without being played, by link, is the round with no presses. */
@@ -325,7 +345,7 @@ if (screen) {
 
   const toggleControl = (now: number): void => {
     const scenario = replayOf(flow.step);
-    if (!scenario) return;
+    if (!scenario || !controlAllowed(flow)) return;
     if (deciding()) start = now - msFor(pendingNow()?.at ?? 0);
     controlOn = !controlOn;
     if (controlOn && !run) rerun(scenario);
@@ -336,7 +356,12 @@ if (screen) {
 
   const draw = (now: number): void => {
     const scenario = replayOf(flow.step);
-    if (flow.step === 'title') drawTitle(s.rect, prompts.title, promptVisible(now - start, reducedMotion.matches), prompts.settingsHint);
+    if (flow.step === 'title') drawTitle(s.rect, prompts.title, promptVisible(now - start, reducedMotion.matches), prompts.settingsHint, modeOf(flow));
+    else if (flow.step === 'whole-day') drawWholeDay(s.rect, prompts.wholeDay);
+    else if (flow.step === 'round-comparison') {
+      const [r1, r2] = [resultFor(1), resultFor(2)];
+      drawTable(s.rect, {title: ROUNDS_TITLE, headings: ROUND_HEADINGS, rows: roundComparisonRows(r1, r2), below: [roundsVerdict(r1, r2)], note: ROUNDS_NOTE}, prompts.roundsResult);
+    }
     else if (flow.step === 'settings') drawSettings(s.rect, editor, remembered);
     else if (flow.step === 'today-results') drawResults(s.rect, todayRows(day.today.metrics), day.today.metrics.salesLostGbp === 0, prompts.results);
     else if (flow.step === 'comparison') drawComparison(s.rect, comparisonRows(day), savingsRows(day, savings(day)), prompts.comparison);
@@ -351,7 +376,7 @@ if (screen) {
       drawShop(s.rect, view);
     } else if (roundResultOf(flow.step)) {
       const n = roundResultOf(flow.step) ?? 1;
-      drawResults(s.rect, roundRows(n, resultFor(n)), false, n === 1 ? prompts.round1Result : prompts.round2Result, RESULT_TITLES[n]);
+      drawResults(s.rect, roundRows(n, resultFor(n)), false, prompts.round1Result, RESULT_TITLES[n]);
     }
     else if (scenario) {
       const minute = replayMinute(now);
@@ -431,7 +456,12 @@ if (screen) {
     }
     if (action === 'control') {
       toggleControl(now);
-      return replayOf(flow.step) !== null;
+      return controlAllowed(flow);
+    }
+    if (flow.step === 'title' && (action === 'mode' || action === 'up' || action === 'down' || action === 'decrease' || action === 'increase')) {
+      enter(toggleMode(flow), now);
+      announce(MODE_TEXT[modeOf(flow)]);
+      return true;
     }
     if (action === 'serve' || action === 'mix' || action === 'hub') return pressPlay(action, now);
     if (playing) return action === 'advance';
@@ -483,6 +513,7 @@ if (screen) {
   });
 
   controlButton.addEventListener('click', () => act('control'));
+  modeButton.addEventListener('click', () => act('mode'));
   for (const [action, el] of Object.entries(playButtonEls) as [PlayAction, HTMLButtonElement][]) el.addEventListener('click', () => act(action));
   pickButtons['walk-in'].addEventListener('click', () => act('walk-in'));
   pickButtons.order.addEventListener('click', () => act('order'));

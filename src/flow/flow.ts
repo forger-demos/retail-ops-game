@@ -3,8 +3,11 @@ import type {ScenarioName} from '../sim/params';
 
 /** The pitch in order; SPACE walks it and the comparison loops back to the same day. */
 export const STEPS = ['title', 'today', 'today-results', 'hub', 'comparison'] as const;
-/** Play mode, the default: two played rounds come between the title and the full-shift pitch. */
-export const PLAY_STEPS = ['round-1', 'round-1-result', 'round-2', 'round-2-result'] as const;
+/**
+ * Play mode, the default: two played rounds, their comparison, and a card that introduces the
+ * whole real day, all between the title and the full-shift pitch.
+ */
+export const PLAY_STEPS = ['round-1', 'round-1-result', 'round-2', 'round-comparison', 'whole-day'] as const;
 export type PlayStep = (typeof PLAY_STEPS)[number];
 /**
  * The settings menu sits beside the pitch, not in it: it opens from the title and returns there.
@@ -40,7 +43,28 @@ export function roundOf(step: Step): RoundNumber | null {
 
 /** Which round a step shows the result of, or null. */
 export function roundResultOf(step: Step): RoundNumber | null {
-  return step === 'round-1-result' ? 1 : step === 'round-2-result' ? 2 : null;
+  return step === 'round-1-result' ? 1 : null;
+}
+
+/**
+ * Take-control is a presenter's tool. In play mode the whole day always runs on autoplay, so the
+ * comparison it ends on is the same like-for-like pair whatever was pressed in the rounds (ADR 0001).
+ */
+export function controlAllowed(state: FlowState): boolean {
+  return state.presenter === true && replayOf(state.step) !== null;
+}
+
+export type Mode = 'play' | 'presenter';
+
+export function modeOf(state: FlowState): Mode {
+  return state.presenter ? 'presenter' : 'play';
+}
+
+/** The title's mode choice; elsewhere the mode is fixed for the run. */
+export function toggleMode(state: FlowState): FlowState {
+  if (state.step !== 'title') return state;
+  if (!state.presenter) return {...state, presenter: true};
+  return {step: state.step, seed: state.seed};
 }
 
 /** Round 1 mixes every order in store; round 2 has the hub. */
@@ -93,6 +117,12 @@ export function fromQuery(get: (key: string) => string | null): DeepLink {
   switch (get('scene')) {
     case 'play':
       return at(get('round') === '2' ? 'round-2' : 'round-1');
+    case 'round-result':
+      return at('round-1-result');
+    case 'rounds':
+      return at('round-comparison');
+    case 'whole-day':
+      return at('whole-day');
     case 'shop':
       return at(get('scenario') === 'hub' ? 'hub' : 'today', Math.max(0, Number(get('minute')) || 0));
     case 'results':
