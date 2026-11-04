@@ -132,7 +132,7 @@ body[data-step='settings'] #increase {
   align-items: center;
   gap: 10px 8px;
   padding: 10px 10px 18px;
-  border-radius: 10px 10px 42px 10px;
+  border-radius: 22px;
   background: var(--shell);
   box-shadow:
     inset -4px -4px 0 var(--shell-shade),
@@ -143,7 +143,7 @@ body[data-step='settings'] #increase {
   grid-area: bezel;
   justify-self: center;
   padding: 6px 14px 4px;
-  border-radius: 6px 6px 26px 6px;
+  border-radius: 12px;
   background: var(--bezel);
 }
 
@@ -155,7 +155,7 @@ body[data-step='settings'] #increase {
   height: 14px;
   font: bold 8px/1 monospace;
   letter-spacing: 1px;
-  color: var(--px-slate);
+  color: var(--px-mist);
 }
 
 .led {
@@ -203,15 +203,10 @@ body[data-step='settings'] #increase {
   white-space: nowrap;
   margin: 0;
   height: 16px;
-  font: italic bold 11px/16px monospace;
-  letter-spacing: 1px;
+  font: bold 11px/16px monospace;
+  letter-spacing: 3px;
+  text-align: center;
   color: var(--px-mist);
-}
-
-.brand span {
-  font-size: 8px;
-  font-style: normal;
-  color: var(--px-slate);
 }
 
 .dpad {
@@ -246,7 +241,7 @@ body[data-step='settings'] #increase {
   align-self: end;
   font: bold 7px/1 monospace;
   letter-spacing: 1px;
-  color: var(--shell-dark);
+  color: var(--bezel);
 }
 
 .pills span {
@@ -272,11 +267,9 @@ body[data-step='settings'] #increase {
   border-radius: 50%;
   background: var(--button-a);
   box-shadow: 0 3px 0 var(--px-ink);
-  font: bold 12px/1 monospace;
-  color: var(--px-cream);
 }
 
-.ab .a {
+.ab span:last-child {
   margin-top: -14px;
 }
 
@@ -288,7 +281,6 @@ body[data-step='settings'] #increase {
       'pills bezel ab';
     grid-template-columns: auto auto auto;
     padding: 8px 14px;
-    border-radius: 10px 10px 30px 10px;
   }
 
   .pills {
