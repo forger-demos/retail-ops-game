@@ -1,13 +1,14 @@
 import {describe, expect, test} from 'bun:test';
 
+import {promptsFor} from '../render/prompts';
 import {SCREEN_HEIGHT, SCREEN_WIDTH} from '../render/screen-size';
 import {BLINK_MS, drawTitle, HOLD_MS, promptVisible} from './title';
 
 type Call = [number, number, number, number, number];
 
-const draw = (showPrompt: boolean): Call[] => {
+const draw = (showPrompt: boolean, prompt = promptsFor('keyboard').title): Call[] => {
   const calls: Call[] = [];
-  drawTitle((x, y, w, h, s) => calls.push([x, y, w, h, s]), showPrompt);
+  drawTitle((x, y, w, h, s) => calls.push([x, y, w, h, s]), prompt, showPrompt);
   return calls;
 };
 
@@ -20,6 +21,13 @@ describe('title screen', () => {
       expect(y).toBeGreaterThanOrEqual(0);
       expect(x + w).toBeLessThanOrEqual(SCREEN_WIDTH);
       expect(y + h).toBeLessThanOrEqual(SCREEN_HEIGHT);
+    }
+  });
+
+  test('the touch prompt stays inside the screen', () => {
+    for (const [x, , w] of draw(true, promptsFor('touch').title)) {
+      expect(x).toBeGreaterThanOrEqual(0);
+      expect(x + w).toBeLessThanOrEqual(SCREEN_WIDTH);
     }
   });
 
