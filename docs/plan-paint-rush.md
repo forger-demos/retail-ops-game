@@ -30,7 +30,7 @@ The settings menu starts from these values; the owner edits them in the demo.
 - Order size: 1 tin 55%, 2-3 tins 25%, 4-5 tins 12%, 6-12 tins 8%.
 - Tin prices: 750ml GBP45, 2.5L GBP85, 5L GBP120. Tin size split: 750ml 15%, 2.5L 40%, 5L 45% (average near GBP95).
 - Hub threshold: orders over 5 tins. Hub delivery: 2 hours.
-- Stores and trading days per year: set for the extrapolation.
+- Stores and trading days per year: 50 and 360, placeholders for the extrapolation.
 
 ## Build order
 

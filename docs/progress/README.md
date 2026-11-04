@@ -12,3 +12,5 @@ Visual artefacts that have been superseded, kept in running order so this folder
 ## Entries
 
 - `01-shop-scene-wireframe/` - the approved grey-box wireframe for the shop scene, archived when `shop-scene` shipped.
+- `02-shop-scene-screenshots/` - the title and shop-scene screenshots as `shop-scene` shipped them, archived when `two-run-results` refreshed the set.
+- `03-two-run-results-wireframe/` - the approved grey-box wireframe for the pitch flow and comparison, archived when `two-run-results` shipped.

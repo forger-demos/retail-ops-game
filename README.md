@@ -39,11 +39,14 @@ bun run build
 
 This writes `dist/paint-rush.html`, one self-contained file with every script, style and asset inlined. Copy it to the presenting laptop and open it straight from disk (file://); it needs no network or server. Make the browser full screen and press SPACE to advance.
 
-SPACE on the title starts the replay of today's shift; during a replay SPACE skips to the next narration beat. To open a replay directly, for rehearsal, add `?scene=shop` to the URL, with `&scenario=hub` for the hub run and `&minute=<shop minute>` to start part-way through.
+SPACE walks the pitch: the title, today's replay, today's results, the same day with the hub, then the comparison of the two with the sales saved per day, week, year and across the estate. During a replay SPACE skips to the next narration beat. At the comparison SPACE replays the same day and R reshuffles it (the next seed). Each screen's text is also written to a visually hidden live region.
+
+To open a step directly, for rehearsal, add `?scene=` to the URL: `shop` for a replay (with `&scenario=hub` for the hub run and `&minute=<shop minute>` to start part-way through), `results` for today's results, `comparison` for the comparison. `&seed=<n>` picks the day.
 
 ## Layout
 
-- `src/sim/` - the simulation: parameters, seeded arrivals, the event engine, the timeline and its metrics. Imports nothing from the DOM or the renderer.
+- `src/sim/` - the simulation: parameters, seeded arrivals, the event engine, the timeline, its metrics and their extrapolation to a year and the estate. Imports nothing from the DOM or the renderer.
 - `src/render/` - the screen, palette, font, sprites, the text box, and the pure replay state and narration derived from a timeline.
 - `src/scenes/` - what is drawn on each screen.
+- `src/flow/` - the order of the pitch and the deep links into it, as a pure state machine.
 - `src/styles/tokens.css` - the four colours; the only file that writes a colour.

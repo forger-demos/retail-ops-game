@@ -3,7 +3,7 @@
   "tokens": ["src/styles/tokens.css"],
   "start": "bun run dev",
   "url": "http://localhost:3107",
-  "routes": ["/", "/?scene=shop&minute=424", "/?scene=shop&scenario=hub&minute=179"],
+  "routes": ["/", "/?scene=shop&minute=424", "/?scene=shop&scenario=hub&minute=179", "/?scene=results", "/?scene=comparison"],
   "viewports": [
     {"name": "phone", "width": 390, "height": 844},
     {"name": "desktop", "width": 1280, "height": 800}
