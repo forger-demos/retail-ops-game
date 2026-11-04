@@ -92,17 +92,17 @@
       "priority": "P1",
       "status": "not_started",
       "type": "feature",
-      "depends_on": ["two-run-results"],
+      "depends_on": ["two-run-results", "tap-input"],
       "effort": "medium",
       "issue": null,
       "title": "Settings menu to edit every demo parameter",
-      "description": "Waits for the owner to approve the wireframe at docs/design/settings/. A Game Boy-style menu opened with S from the title, keyboard only: shift hours, time scale, staff on floor (1-4), walk-ins per hour, mix orders per hour, service time, patience, average sale, minutes per tin, order-size mix, tin prices per size, hub threshold, stores, trading days per year. Reshuffle and reset-to-defaults actions. Values persist in browser storage and feed the next run.",
+      "description": "Waits for the owner to approve the wireframe at docs/design/settings/. A Game Boy-style menu opened with S from the title, by keyboard or touch: shift hours, time scale, staff on floor (1-4), walk-ins per hour, mix orders per hour, service time, patience, average sale, minutes per tin, order-size mix, tin prices per size, hub threshold, stores, trading days per year. Reshuffle and reset-to-defaults actions. Values persist in browser storage and feed the next run.",
       "acceptance_criteria": [
         "Every parameter in src/sim/params.ts is editable from the menu and the next run uses the edited value",
         "Order-size percentages that do not total 100 show 'MUST TOTAL 100' and block BACK",
         "Values survive a reload; with storage unavailable they still apply for the session and a note says so",
         "Reset restores the documented defaults",
-        "The menu is fully keyboard operable and `check a11y` passes",
+        "The menu is fully operable by keyboard and by touch (tap a row to select it, on-screen -/+ to change a value) and `check a11y` passes",
         "docs/screenshots/ is updated and docs/design/settings/ is moved into docs/progress/ per the archive rule"
       ],
       "files": ["src/render/settings.ts", "src/flow/settings-store.ts"],
@@ -143,6 +143,37 @@
       ],
       "files": ["src/audio/sfx.ts"],
       "reuse": ["the shop-scene replay events"]
+    },
+    "tap-input": {
+      "priority": "P0",
+      "status": "not_started",
+      "type": "feature",
+      "depends_on": [
+        "two-run-results"
+      ],
+      "effort": "small",
+      "issue": null,
+      "title": "Touch input so the demo works on phones and tablets",
+      "description": "Owner report: on mobile the demo cannot be advanced because there is no SPACE key. Every keyboard action must also work by touch. A tap or click anywhere on the game screen does what SPACE does (start, skip narration, advance, replay). Actions bound to other keys get a touch equivalent: reshuffle (R) and sound (M) as small on-screen buttons in the letterbox area or under the screen, sized for a finger, styled in the palette. On touch devices the prompts read TAP instead of PRESS SPACE. Keyboard behaviour is unchanged.",
+      "acceptance_criteria": [
+        "A tap on the canvas advances every step of the flow exactly as SPACE does (Playwright test with touch emulation at the phone viewport)",
+        "Reshuffle and sound toggle are reachable by touch, at least 44x44 CSS px, and keyboard focusable",
+        "On a touch device the title and results prompts say TAP; on desktop they still say PRESS SPACE",
+        "Taps do not zoom or scroll the page (touch-action and viewport set) and a double tap does not skip two steps by accident",
+        "Keyboard controls are unchanged and their tests still pass",
+        "docs/screenshots/ updated; the previous set is first copied into docs/progress/ per the archive rule"
+      ],
+      "files": [
+        "src/main.ts",
+        "src/flow/flow.ts",
+        "src/render/title.ts",
+        "src/render/results.ts",
+        "index.html",
+        "tests/e2e/"
+      ],
+      "reuse": [
+        "the existing SPACE handler: route taps through the same input action rather than a parallel path"
+      ]
     }
   }
 }

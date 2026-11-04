@@ -9,6 +9,8 @@ Plan: [docs/plan-paint-rush.md](../docs/plan-paint-rush.md). `backlog.json` is t
 - `shop-scene` - animated replay of one scenario (after sim-engine). Done.
 - `two-run-results` - title, today, results, hub, comparison (after shop-scene). Done.
 
+- `tap-input` - touch input so the demo works on phones and tablets (after two-run-results).
+
 ## P1
 
 - `settings` - menu to edit every parameter (after two-run-results). Wireframe approved.
