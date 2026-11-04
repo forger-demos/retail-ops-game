@@ -21,3 +21,4 @@ Visual artefacts that have been superseded, kept in running order so this folder
 - `08-take-control-screenshots/` - the full screenshot set as `take-control` left it, archived when `chiptune-sound` added the sound button and the status bar speaker.
 - `09-v1-screenshots/` - the full v1 screenshot set, four greens and 8-pixel sprites, as `chiptune-sound` left it, archived when `v2-style-frame` redrew the shop in colour.
 - `10-v2-style-frame-screenshots/` - the full screenshot set as `v2-style-frame` left it, archived when `v2-play-mode` added the played rounds and their console buttons.
+- `11-v2-play-mode-screenshots/` - the full screenshot set as `v2-play-mode` left it, archived when `v2-debrief` added the mode choice, the round comparison and the whole-day card.

@@ -35,7 +35,7 @@ test.describe('on a phone', () => {
     page.on('pageerror', e => errors.push(e.message));
     await page.goto(PRESENTER);
     await expect(page.locator('body')).toHaveAttribute('data-input', 'touch');
-    await expect(page.locator('#prompt')).toHaveText('TAP TO START');
+    await expect(page.locator('#prompt')).toHaveText(/^TAP TO START\. Presenter mode/);
     await expect(page.locator('#screen')).toHaveAttribute('aria-label', /Tap to start/);
 
     await tap(page);
@@ -103,7 +103,7 @@ test.describe('on a desktop', () => {
   test('the prompts still say PRESS SPACE and a click advances', async ({page}) => {
     await page.goto(PRESENTER);
     await expect(page.locator('body')).toHaveAttribute('data-input', 'keyboard');
-    await expect(page.locator('#prompt')).toHaveText('PRESS SPACE');
+    await expect(page.locator('#prompt')).toHaveText(/^PRESS SPACE\. Presenter mode/);
     await page.locator('#screen').click();
     await expect(page.locator('body')).toHaveAttribute('data-step', 'today');
   });

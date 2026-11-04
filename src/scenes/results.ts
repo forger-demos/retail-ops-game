@@ -35,17 +35,32 @@ export function drawResults(plot: Plot, rows: readonly Row[], noLoss: boolean, p
   drawTextbox(plot, prompt);
 }
 
-export function drawComparison(plot: Plot, table: readonly Row[], saved: readonly Row[], prompt: string): void {
-  header(plot, COMPARISON_TITLE);
+/** A two-column table under its headings, and below a rule the rows that sum it up. */
+export interface Table {
+  title: string;
+  headings: readonly string[];
+  rows: readonly Row[];
+  below: readonly Row[];
+  /** Small print over the text box, wrapped to the screen. */
+  note: string;
+}
+
+export function drawTable(plot: Plot, t: Table, prompt: string): void {
+  header(plot, t.title);
   let y = HEADER_H + 3;
-  drawRow(plot, {label: '', values: [...COMPARISON_HEADINGS]}, y);
-  for (const row of table) drawRow(plot, row, (y += LINE_H));
+  drawRow(plot, {label: '', values: [...t.headings]}, y);
+  for (const row of t.rows) drawRow(plot, row, (y += LINE_H));
   y += LINE_H + 3;
   plot(MARGIN, y - 4, SCREEN_WIDTH - 2 * MARGIN, 1, 1);
-  for (const row of saved) {
+  for (const row of t.below) {
     drawRow(plot, row, y);
     y += LINE_H;
   }
-  wrap(FOOTNOTE, FOOTNOTE_CHARS).forEach((line, i) => drawText(plot, line, MARGIN, TEXTBOX.y - 20 + i * 9, 1));
+  const lines = wrap(t.note, FOOTNOTE_CHARS);
+  lines.forEach((line, i) => drawText(plot, line, MARGIN, TEXTBOX.y - 11 - (lines.length - 1 - i) * 9, 1));
   drawTextbox(plot, prompt);
+}
+
+export function drawComparison(plot: Plot, table: readonly Row[], saved: readonly Row[], prompt: string): void {
+  drawTable(plot, {title: COMPARISON_TITLE, headings: COMPARISON_HEADINGS, rows: table, below: saved, note: FOOTNOTE}, prompt);
 }

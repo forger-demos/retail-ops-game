@@ -243,7 +243,7 @@
     },
     "v2-debrief": {
       "priority": "P0",
-      "status": "not_started",
+      "status": "completed",
       "type": "feature",
       "depends_on": [
         "v2-play-mode"

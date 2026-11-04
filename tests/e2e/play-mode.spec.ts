@@ -87,8 +87,8 @@ test.describe('on a phone', () => {
     }
   });
 
-  test('both rounds are played by touch, each ends on its result, and the day follows', async ({page}) => {
-    test.setTimeout(90_000);
+  test('both rounds are played by touch, then the round comparison, and the whole day ends on the autoplay comparison', async ({page}) => {
+    test.setTimeout(150_000);
     const errors: string[] = [];
     page.on('pageerror', e => errors.push(e.message));
     await shortRounds(page);
@@ -114,12 +114,26 @@ test.describe('on a phone', () => {
       if ((await serve.getAttribute('aria-disabled')) === 'false') await serve.tap();
       await page.waitForTimeout(150);
     }
-    await expect(body(page)).toHaveAttribute('data-step', 'round-2-result', {timeout: 5000});
-    await expect(live(page)).toHaveText(/^Round 2 result: .* 0 shop minutes with the counter unmanned\. 10 tins sent to the hub\./);
+    await expect(body(page)).toHaveAttribute('data-step', 'round-comparison', {timeout: 5000});
+    await expect(live(page)).toHaveText(/^Round 1 against round 2\. Round 1: .* \d+ shop minutes unmanned\. Round 2: .* 0 shop minutes unmanned\./);
 
     await page.waitForTimeout(400);
     await page.locator('#screen').tap();
+    await expect(body(page)).toHaveAttribute('data-step', 'whole-day');
+    await expect(live(page)).toHaveText(/^Now a whole real day/);
+    await page.waitForTimeout(400);
+    await page.locator('#screen').tap();
     await expect(body(page)).toHaveAttribute('data-step', 'today');
+    await expect(page.locator('#control')).toBeHidden();
+
+    // Tapped through, the whole day must end on the same comparison the presenter's autoplay gives.
+    while ((await body(page).getAttribute('data-step')) !== 'comparison') {
+      await page.waitForTimeout(400);
+      await page.locator('#screen').tap();
+    }
+    const played = await live(page).textContent();
+    await page.goto(`${URL}?mode=presenter&scene=comparison`);
+    await expect(live(page)).toHaveText(String(played));
     expect(errors).toEqual([]);
   });
 });
