@@ -1,5 +1,5 @@
 {
-  "paths": ["src/**/*.ts", "src/**/*.css", "index.html"],
+  "paths": ["src/main.ts", "src/render/**/*.ts", "src/scenes/**/*.ts", "src/styles/**/*.css", "index.html"],
   "tokens": ["src/styles/tokens.css"],
   "start": "bun run dev",
   "url": "http://localhost:3107",
