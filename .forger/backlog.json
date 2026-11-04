@@ -175,6 +175,178 @@
       "reuse": [
         "the existing SPACE handler: route taps through the same input action rather than a parallel path"
       ]
+    },
+    "v2-style-frame": {
+      "priority": "P0",
+      "status": "not_started",
+      "type": "feature",
+      "depends_on": [],
+      "effort": "large",
+      "issue": null,
+      "title": "v2 style frame: a playful 8-bit shop the audience recognises",
+      "description": "The look for v2, built and shown before anything plays on it (docs/plan-paint-rush-v2.md, ADR 0003). Replace the four-green palette with a limited 8-bit handheld palette with real colour, all in src/styles/tokens.css. Draw the screen inside a handheld console frame (shell, screen bezel, power LED, A/B-style action buttons as placeholders). Redraw the shop at a scale where each thing reads at a glance on a projector and a phone: a checkered floor, the tinting machine and shaker in the back, the till on a counter, a colour-swatch wall, shelves of tins, plants; a shop assistant and at least four visibly different customers with drop shadows; a speech bubble with an order ('10 TINS'); colour-coded patience bars; a red COUNTER UNMANNED banner. Expose it as ?scene=style-frame (a fixed composed moment: a 10-tin order at the till, a queue of three, one customer about to walk out) and keep presenter mode working on the new art. This ticket is the owner's approval gate for v2.",
+      "acceptance_criteria": [
+        "?scene=style-frame renders the composed moment described above in the console frame, at phone and desktop sizes",
+        "Every colour comes from tokens in src/styles/tokens.css; the palette-only tests are replaced by a test that every drawn colour is a defined token",
+        "Each listed prop and character is drawn as original pixel art, with no asset, font or likeness from an existing game",
+        "Presenter mode (the v1 flow) still plays end to end on the new art and its tests pass",
+        "A short capture (video or GIF) of presenter mode on the new art and the style-frame screenshots are linked from the PR, with a paragraph on how the look serves the brief quoted in the v2 plan",
+        "The v1 screenshots are archived into docs/progress/ before being overwritten"
+      ],
+      "files": [
+        "src/styles/tokens.css",
+        "src/render/palette.ts",
+        "src/render/sprites.ts",
+        "src/render/sprite.ts",
+        "src/scenes/shop.ts",
+        "src/main.ts",
+        "src/styles/main.css",
+        "index.html"
+      ],
+      "reuse": [
+        "docs/plan-paint-rush-v2.md brief and look list",
+        "the existing scene and replay code; change the art, not the model"
+      ]
+    },
+    "v2-play-mode": {
+      "priority": "P0",
+      "status": "needs_human",
+      "type": "feature",
+      "depends_on": [
+        "v2-style-frame"
+      ],
+      "effort": "large",
+      "issue": null,
+      "title": "v2 play mode: two short rounds where you are the shop assistant",
+      "description": "Waits for the owner to approve the v2-style-frame capture (set status to not_started to release). The default experience. Round 1 (TODAY): every mix order is mixed in store. Round 2 (WITH HUB): orders over the hub threshold can be sent to the hub with one press. Each round is short (default 40 s, editable) and plays a busy slice of the day at a faster round time scale. The opening is scripted: a 10-tin trade order is at the till at second 0 and a queue starts forming. The player chooses every action with big labelled console buttons: SERVE (for the customer at the till), MIX N TINS (locks the till for N tins), SEND TO HUB (round 2, large orders only). Keys, clicks and taps all work. The simulation stays the model: arrivals come from the sim with the round seed, the same in both rounds, and the player's choices are the decision policy (src/sim/control.ts). Each round ends on a short result: captured, walked out, time unmanned, sent to hub.",
+      "acceptance_criteria": [
+        "Both rounds face identical arrivals for one seed, and the scripted 10-tin order is at the till at second 0 of each",
+        "MIX N TINS takes the assistant off the floor for N tins at the round time scale; the COUNTER UNMANNED banner shows exactly while nobody is on the floor",
+        "SEND TO HUB is offered only in round 2 and only for orders over the hub threshold, and keeps the assistant at the till",
+        "Every action works by key, click and tap; buttons show what they will do and are disabled with a reason when not available",
+        "Round results come from the sim's metrics for the choices made (unit tests drive the policy with scripted choices)",
+        "A Playwright test plays both rounds on a phone viewport with touch",
+        "A capture of a played round is linked from the PR"
+      ],
+      "files": [
+        "src/flow/flow.ts",
+        "src/flow/input.ts",
+        "src/sim/control.ts",
+        "src/scenes/play.ts",
+        "src/render/buttons.ts"
+      ],
+      "reuse": [
+        "src/sim/control.ts decision policy from take-control",
+        "the v2-style-frame art"
+      ]
+    },
+    "v2-debrief": {
+      "priority": "P0",
+      "status": "needs_human",
+      "type": "feature",
+      "depends_on": [
+        "v2-play-mode"
+      ],
+      "effort": "medium",
+      "issue": null,
+      "title": "v2 debrief: from two played rounds to a whole real day",
+      "description": "Waits for the owner to approve the v2-style-frame capture (set status to not_started to release). Ties the felt problem to the evidence. Title offers PLAY (default) and PRESENTER. After round 2, a round comparison, then 'NOW A WHOLE REAL DAY': the existing full-shift today vs hub replay at the full-shift time scale, then the comparison with per day, week, year and estate figures and the excludes-costs footnote. The full-shift debrief always uses autoplay, so its comparison stays like-for-like (ADR 0001).",
+      "acceptance_criteria": [
+        "PLAY runs round 1 -> round 1 result -> round 2 -> round comparison -> whole-day replays -> estate comparison",
+        "PRESENTER runs the v1 flow unchanged on the new art",
+        "The whole-day comparison equals the sim metrics for autoplay, whatever the player chose in the rounds",
+        "Every step advances by key, click and tap; the live region carries each result as text",
+        "Screenshots of every step updated, previous set archived"
+      ],
+      "files": [
+        "src/flow/flow.ts",
+        "src/scenes/title.ts",
+        "src/scenes/results.ts"
+      ],
+      "reuse": [
+        "two-run-results flow",
+        "src/sim/extrapolate.ts"
+      ]
+    },
+    "v2-customer-types": {
+      "priority": "P1",
+      "status": "needs_human",
+      "type": "feature",
+      "depends_on": [
+        "v2-play-mode"
+      ],
+      "effort": "medium",
+      "issue": null,
+      "title": "v2 customer types: show which sales walk out",
+      "description": "Waits for the owner to approve the v2-style-frame capture (set status to not_started to release). Walk-ins become types with their own value, look and bubble: colour advice, sample pot, small purchase, alongside mix orders. Default values and shares average to the configured average sale (GBP95), so the headline numbers do not move unless the owner edits them. Types and values are editable in settings; the round and whole-day results show lost sales by type.",
+      "acceptance_criteria": [
+        "With default settings the mean walk-in value equals the average sale parameter (unit test over many seeds)",
+        "Each type has a distinct bubble and sprite variation",
+        "Results list lost sales by type",
+        "Settings edit type shares and values, with shares validated to total 100"
+      ],
+      "files": [
+        "src/sim/params.ts",
+        "src/sim/arrivals.ts",
+        "src/render/sprites.ts",
+        "src/flow/settings.ts"
+      ],
+      "reuse": [
+        "orderSizeMix validation in settings"
+      ]
+    },
+    "v2-juice": {
+      "priority": "P1",
+      "status": "needs_human",
+      "type": "feature",
+      "depends_on": [
+        "v2-play-mode"
+      ],
+      "effort": "medium",
+      "issue": null,
+      "title": "v2 juice: every action gets feedback",
+      "description": "Waits for the owner to approve the v2-style-frame capture (set status to not_started to release). Each player action and game event answers with motion, sound and a visual change: buttons press down; the dialogue arrow bounces; the shaker jitters with a low hum while mixing; a till chime and a +GBP floater on a sale; a descending coin jingle, a red flash and a -GBP floater on a walkout; a van whoosh on SEND TO HUB; the patience bar shakes when nearly empty. Sound stays muted by default with a visible SFX button on the console; motion respects reduced-motion.",
+      "acceptance_criteria": [
+        "A table in the code maps every action and event to its visual, motion and sound, and a test asserts every event in the timeline has an entry",
+        "With reduced motion, jitter, shake and flash are off and the information still shows",
+        "No audio file is added; effects are synthesised; nothing plays until sound is enabled",
+        "A capture of a round with sound on is linked from the PR"
+      ],
+      "files": [
+        "src/audio/sfx.ts",
+        "src/render/replay.ts",
+        "src/scenes/play.ts"
+      ],
+      "reuse": [
+        "chiptune-sound effects",
+        "the tap-input button styles"
+      ]
+    },
+    "v2-capture": {
+      "priority": "P2",
+      "status": "needs_human",
+      "type": "feature",
+      "depends_on": [
+        "v2-debrief"
+      ],
+      "effort": "small",
+      "issue": null,
+      "title": "v2 capture: a recorded play-through for the slide deck",
+      "description": "Waits for the owner to approve the v2-style-frame capture (set status to not_started to release). A command that plays a scripted round and the debrief headlessly and writes a video and a GIF to docs/screenshots/, so the owner can drop the demo into slides if the room has no browser.",
+      "acceptance_criteria": [
+        "`bun run capture` writes docs/screenshots/play-through.webm and .gif from a fixed seed and scripted choices",
+        "The previous capture is archived into docs/progress/ first",
+        "README says how to regenerate it"
+      ],
+      "files": [
+        "scripts/capture.ts",
+        "package.json",
+        "README.md"
+      ],
+      "reuse": [
+        "Playwright recordVideo",
+        "the e2e play test's scripted choices"
+      ]
     }
   }
 }
