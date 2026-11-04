@@ -113,7 +113,7 @@ describe('replayState', () => {
     expect(after.waiting.map(w => w.walkIn)).not.toContain(lost.walkIn);
     const since = before.waiting.map(w => w.since);
     expect(since).toEqual([...since].sort((a, b) => a - b));
-    expect(after.losses.at(-1)).toEqual({walkIn: lost.walkIn, at: lost.at, saleGbp: lost.saleGbp});
+    expect(after.losses.at(-1)).toEqual({walkIn: lost.walkIn, kind: lost.kind, at: lost.at, saleGbp: lost.saleGbp});
   });
 
   test('the hub run records each dispatch; today never dispatches', () => {

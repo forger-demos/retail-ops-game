@@ -40,7 +40,7 @@ describe('narration', () => {
     const c = compare(1, DEFAULT_PARAMS);
     const today = narrationBeats('today', c.today.timeline, DEFAULT_PARAMS).map(b => b.text);
     expect(today.some(t => /^A CUSTOMER WANTS \d+ TINS? MIXED!$/.test(t))).toBe(true);
-    expect(today.some(t => /^CUSTOMER LEFT! -GBP95$/.test(t))).toBe(true);
+    expect(today.some(t => /^CUSTOMER LEFT! -GBP\d+$/.test(t))).toBe(true);
     expect(today).toContain('NOBODY ON THE FLOOR...');
     const hub = narrationBeats('hub', c.hub.timeline, DEFAULT_PARAMS).map(b => b.text);
     expect(hub.some(t => /^\d+ TINS SENT TO THE HUB\. 2H DELIVERY\.$/.test(t))).toBe(true);

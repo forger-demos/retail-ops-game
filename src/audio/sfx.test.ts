@@ -6,10 +6,10 @@ import type {TimelineEvent} from '../sim/timeline';
 import {type AudioLike, createSfx, EFFECTS, effectsBetween, type SfxName} from './sfx';
 
 const timeline: TimelineEvent[] = [
-  {type: 'walk-in-arrive', at: 1, walkIn: 0, freeStaff: 1, staffOnFloor: 1},
+  {type: 'walk-in-arrive', at: 1, walkIn: 0, kind: 'small', freeStaff: 1, staffOnFloor: 1},
   {type: 'order-arrive', at: 2, order: 0, tins: ['750ml', '2.5L']},
   {type: 'mix-start', at: 2, order: 0, staff: 0, tins: 2, until: 4},
-  {type: 'walk-in-lost', at: 5, walkIn: 1, saleGbp: 40},
+  {type: 'walk-in-lost', at: 5, walkIn: 1, kind: 'small', saleGbp: 40},
   {type: 'hub-dispatch', at: 6, order: 1, tins: 3, deliveryAt: 60},
 ];
 
@@ -30,7 +30,7 @@ describe('effectsBetween', () => {
   test('puts several events in one window in time order', () => {
     const wide: TimelineEvent[] = [
       {type: 'hub-dispatch', at: 0.8, order: 0, tins: 1, deliveryAt: 9},
-      {type: 'walk-in-arrive', at: 0.5, walkIn: 0, freeStaff: 1, staffOnFloor: 1},
+      {type: 'walk-in-arrive', at: 0.5, walkIn: 0, kind: 'small', freeStaff: 1, staffOnFloor: 1},
     ];
     expect(effectsBetween(wide, 0, 1)).toEqual(['walk-in', 'van']);
   });

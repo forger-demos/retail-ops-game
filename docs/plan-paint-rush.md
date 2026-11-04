@@ -25,7 +25,7 @@ The settings menu starts from these values; the owner edits them in the demo.
 
 - Shift: 8 hours. Time scale: 1 s = 5 min.
 - Staff on the floor: 1 (1-4).
-- Walk-ins: 10 per hour, served in 4 minutes, average sale GBP95, patience 10 minutes.
+- Walk-ins: 10 per hour, served in 4 minutes, average sale GBP95 (the customer types' values average to it), patience 10 minutes.
 - Mix orders: 3 per hour; 5 minutes per tin, whatever the size.
 - Order size: 1 tin 55%, 2-3 tins 25%, 4-5 tins 12%, 6-12 tins 8%.
 - Tin prices: 750ml GBP45, 2.5L GBP85, 5L GBP120. Tin size split: 750ml 15%, 2.5L 40%, 5L 45% (average near GBP95).

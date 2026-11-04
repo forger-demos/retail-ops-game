@@ -30,7 +30,7 @@ describe('settings storage', () => {
 
   test('every field round-trips through serialise and parse', () => {
     for (const f of FIELDS) {
-      const mine = f.id.startsWith('band') ? DEFAULT_SETTINGS : f.write(DEFAULT_SETTINGS, f.max);
+      const mine = f.id.startsWith('band') || f.id.startsWith('type-share') ? DEFAULT_SETTINGS : f.write(DEFAULT_SETTINGS, f.max);
       expect(parse(serialise(mine))).toEqual(mine);
     }
   });
@@ -57,10 +57,10 @@ describe('settings storage', () => {
   });
 
   test('stored values are clamped and unknown or non-numeric ones ignored', () => {
-    const got = parse(JSON.stringify({version: 1, values: {staff: 99, walkIns: 'many', sale: -4, nope: 1, shiftHours: 10.4}}));
+    const got = parse(JSON.stringify({version: 1, values: {staff: 99, walkIns: 'many', 'type-value-small': -4, nope: 1, shiftHours: 10.4}}));
     expect(got.params.staff).toBe(4);
     expect(got.params.walkInsPerHour).toBe(DEFAULT_SETTINGS.params.walkInsPerHour);
-    expect(got.params.averageSaleGbp).toBe(5);
+    expect(got.params.walkInTypes.find(t => t.kind === 'small')?.valueGbp).toBe(5);
     expect(got.params.shiftMinutes).toBe(600);
   });
 

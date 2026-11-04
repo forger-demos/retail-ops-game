@@ -57,6 +57,8 @@ describe('settings screen', () => {
     const off = change({...openEditor(DEFAULT_SETTINGS), cursor: FIELDS.findIndex(f => f.id === 'band0')}, 1);
     expect(statusLines(openEditor(DEFAULT_SETTINGS), true)).toEqual([]);
     expect(statusLines(off, true)).toEqual(['MUST TOTAL 100 NOW 101']);
+    const types = change({...openEditor(DEFAULT_SETTINGS), cursor: FIELDS.findIndex(f => f.id === 'type-share-advice')}, 1);
+    expect(statusLines(types, true)).toEqual(['TYPES MUST TOTAL 100 NOW 105']);
     expect(statusLines(off, false)).toEqual(['MUST TOTAL 100 NOW 101', NOT_REMEMBERED]);
     expect(textWidth(NOT_REMEMBERED)).toBeLessThanOrEqual(SCREEN_WIDTH - 4);
   });

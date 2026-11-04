@@ -1,6 +1,7 @@
 import type {Comparison} from '../sim/engine';
 import type {Savings} from '../sim/extrapolate';
 import type {Metrics} from '../sim/metrics';
+import {WALK_IN_KINDS, type WalkInKind} from '../sim/params';
 import {formatGbp} from './money';
 import {SCENARIO_TITLES} from './narration';
 
@@ -14,12 +15,25 @@ export const FOOTNOTE = 'EXCLUDES CENTRAL PREP AND DELIVERY COSTS.';
 export const RESULTS_TITLE = `${SCENARIO_TITLES.today}: RESULTS`;
 export const COMPARISON_TITLE = 'TODAY VS CENTRAL HUB';
 
+export const KIND_NAMES: Record<WalkInKind, string> = {advice: 'ADVICE', sample: 'SAMPLES', small: 'SMALL'};
+
+/** What walked out, by what they came for: the sales that never happened, and why they were lost. */
+export function lostByTypeRows(m: Metrics): Row[] {
+  return WALK_IN_KINDS.map(kind => ({label: `LOST ${KIND_NAMES[kind]}`, values: [`${m.lostByType[kind].count} ${formatGbp(m.lostByType[kind].gbp)}`]}));
+}
+
+export function lostByTypeSentence(m: Metrics): string {
+  const parts = WALK_IN_KINDS.map(k => `${KIND_NAMES[k].toLowerCase()} ${m.lostByType[k].count} (${gbp(m.lostByType[k].gbp)})`);
+  return `Lost by type: ${parts.join(', ')}.`;
+}
+
 export function todayRows(m: Metrics): Row[] {
   return [
     {label: 'TINS MIXED', values: [String(m.tinsMixedInStore)]},
     {label: 'CUSTOMERS SERVED', values: [String(m.walkInsServed)]},
     {label: 'CUSTOMERS LOST', values: [String(m.walkInsLost)]},
     {label: 'SALES LOST', values: [formatGbp(m.salesLostGbp)]},
+    ...lostByTypeRows(m),
   ];
 }
 
@@ -50,7 +64,7 @@ const sentence = (s: string): string => s.charAt(0) + s.slice(1).toLowerCase();
 
 export function resultsAnnouncement(m: Metrics): string {
   const lost = m.salesLostGbp === 0 ? `${sentence(NO_LOSS)}.` : `${gbp(m.salesLostGbp)} in sales lost.`;
-  return `Today's results: ${m.tinsMixedInStore} tins mixed in store, ${m.walkInsServed} customers served, ${m.walkInsLost} customers lost. ${lost} Press space to run the same day with a central hub.`;
+  return `Today's results: ${m.tinsMixedInStore} tins mixed in store, ${m.walkInsServed} customers served, ${m.walkInsLost} customers lost. ${lost} ${lostByTypeSentence(m)} Press space to run the same day with a central hub.`;
 }
 
 export function comparisonAnnouncement(c: Comparison, s: Savings): string {

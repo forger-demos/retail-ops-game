@@ -30,7 +30,8 @@ function drawRow(plot: Plot, row: Row, y: number): void {
 
 export function drawResults(plot: Plot, rows: readonly Row[], noLoss: boolean, prompt: string, title = RESULTS_TITLE): void {
   header(plot, title);
-  rows.forEach((row, i) => drawRow(plot, row, HEADER_H + 8 + i * LINE_H * 1.5));
+  const step = rows.length > 5 ? LINE_H : LINE_H * 1.5;
+  rows.forEach((row, i) => drawRow(plot, row, HEADER_H + 8 + i * step));
   if (noLoss) drawText(plot, NO_LOSS, Math.floor((SCREEN_WIDTH - textWidth(NO_LOSS)) / 2), TEXTBOX.y - 14, 1);
   drawTextbox(plot, prompt);
 }

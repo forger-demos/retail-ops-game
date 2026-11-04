@@ -1,7 +1,7 @@
 import type {RoundNumber} from '../flow/flow';
 import {formatGbp} from '../render/money';
 import {replayState, staffOnFloor, type ReplayState} from '../render/replay';
-import type {Row} from '../render/results';
+import {lostByTypeRows, lostByTypeSentence, type Row} from '../render/results';
 import {OPENING_ORDER, type Round, type RoundResult} from '../sim/round';
 import type {TimelineEvent} from '../sim/timeline';
 import {LOSS_MINUTES, type ShopView} from './shop';
@@ -75,7 +75,7 @@ export function roundRows(n: RoundNumber, r: RoundResult): Row[] {
   ];
   if (n === 2) rows.push({label: 'SENT TO HUB', values: [`${r.tinsSentToHub} TINS`]});
   if (r.ordersLeft > 0) rows.push({label: 'ORDERS NOT MIXED', values: [String(r.ordersLeft)]});
-  return rows;
+  return [...rows, ...lostByTypeRows(r.metrics)];
 }
 
 export const ROUNDS_TITLE = 'ROUND 1 VS ROUND 2';
@@ -114,5 +114,5 @@ export function roundsAnnouncement(r1: RoundResult, r2: RoundResult, next: strin
 export function roundAnnouncement(n: RoundNumber, r: RoundResult, next: string): string {
   const hub = n === 2 ? ` ${r.tinsSentToHub} tins sent to the hub.` : '';
   const left = r.ordersLeft > 0 ? ` ${r.ordersLeft} orders not mixed.` : '';
-  return `Round ${n} result: ${gbp(r.capturedGbp)} in sales made, ${r.walkedOut} customers walked out, ${r.unmannedMinutes} shop minutes with the counter unmanned.${hub}${left} ${next}`;
+  return `Round ${n} result: ${gbp(r.capturedGbp)} in sales made, ${r.walkedOut} customers walked out, ${r.unmannedMinutes} shop minutes with the counter unmanned.${hub}${left} ${lostByTypeSentence(r.metrics)} ${next}`;
 }

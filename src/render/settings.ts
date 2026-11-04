@@ -1,4 +1,4 @@
-import {FIELDS, type Editor, MIX_ERROR, mixTotal, problem, VISIBLE_ROWS} from '../flow/settings';
+import {FIELDS, type Editor, MIX_ERROR, mixTotal, TYPE_ERROR, typeTotal, VISIBLE_ROWS} from '../flow/settings';
 import {drawText, textWidth, type Plot} from './font';
 import {SCREEN_HEIGHT, SCREEN_WIDTH} from './screen-size';
 
@@ -21,7 +21,8 @@ export function rowAt(y: number): number | null {
 /** The lines under the list: what blocks leaving the menu first, then the storage note. */
 export function statusLines(ed: Editor, remembered: boolean): string[] {
   const lines: string[] = [];
-  if (problem(ed.settings)) lines.push(`${MIX_ERROR} NOW ${mixTotal(ed.settings)}`);
+  if (mixTotal(ed.settings) !== 100) lines.push(`${MIX_ERROR} NOW ${mixTotal(ed.settings)}`);
+  if (typeTotal(ed.settings) !== 100) lines.push(`${TYPE_ERROR} NOW ${typeTotal(ed.settings)}`);
   if (!remembered) lines.push(NOT_REMEMBERED);
   return lines;
 }

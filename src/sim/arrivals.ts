@@ -1,10 +1,12 @@
-import type {Params, TinSize} from './params';
+import type {Params, TinSize, WalkInKind} from './params';
 import {TIN_SIZES} from './params';
 import {createRng, deriveSeed, exponential, intBetween, weightedPick} from './rng';
 
 export interface WalkInArrival {
   id: number;
   at: number;
+  kind: WalkInKind;
+  valueGbp: number;
 }
 
 export interface MixOrderArrival {
@@ -21,6 +23,8 @@ export interface Arrivals {
 
 const WALK_IN_STREAM = 1;
 const MIX_ORDER_STREAM = 2;
+/** Its own stream, so the walk-in times and the mix orders of a seed do not move when types are drawn. */
+const WALK_IN_TYPE_STREAM = 3;
 
 /**
  * Every random draw of a shift happens here, before any scenario runs (ADR 0001),
@@ -29,10 +33,12 @@ const MIX_ORDER_STREAM = 2;
  */
 export function drawArrivals(seed: number, params: Params): Arrivals {
   const walkInRng = createRng(deriveSeed(seed, WALK_IN_STREAM));
+  const typeRng = createRng(deriveSeed(seed, WALK_IN_TYPE_STREAM));
   const walkIns: WalkInArrival[] = [];
   if (params.walkInsPerHour > 0) {
     for (let at = exponential(walkInRng, params.walkInsPerHour / 60); at < params.shiftMinutes; at += exponential(walkInRng, params.walkInsPerHour / 60)) {
-      walkIns.push({id: walkIns.length, at: Math.floor(at)});
+      const type = weightedPick(typeRng, params.walkInTypes, t => t.share);
+      walkIns.push({id: walkIns.length, at: Math.floor(at), kind: type.kind, valueGbp: type.valueGbp});
     }
   }
 

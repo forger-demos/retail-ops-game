@@ -103,7 +103,7 @@ describe('shop scene', () => {
   });
 
   test('a full queue sends the extra walk-ins to the door, still counted', () => {
-    const waiting = (n: number) => Array.from({length: n}, (_, i) => ({walkIn: i, since: 55}));
+    const waiting = (n: number) => Array.from({length: n}, (_, i) => ({walkIn: i, kind: 'small' as const, since: 55}));
     const door: Rect = {x: DOOR_SPOT.x, y: DOOR_SPOT.y, w: 24, h: 8};
     const full = render(base({waiting: waiting(QUEUE_SLOTS)}));
     const over2 = render(base({waiting: waiting(QUEUE_SLOTS + 2)}));
@@ -115,7 +115,7 @@ describe('shop scene', () => {
   });
 
   test('a walk-out shows for a moment, then is gone', () => {
-    const losses = [{walkIn: 1, at: 60, saleGbp: 95}];
+    const losses = [{walkIn: 1, kind: 'small' as const, at: 60, saleGbp: 95}];
     const plain = region(render(base({minute: 61})), FLOOR);
     expect(region(render(base({minute: 61, losses})), FLOOR)).not.toEqual(plain);
     expect(region(render(base({minute: 60 + LOSS_MINUTES, losses})), FLOOR)).toEqual(region(render(base({minute: 60 + LOSS_MINUTES})), FLOOR));

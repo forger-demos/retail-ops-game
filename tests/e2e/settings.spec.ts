@@ -80,7 +80,7 @@ test.describe('with a keyboard', () => {
   test('order sizes that do not total 100 block BACK until they do', async ({page}) => {
     await page.goto(PRESENTER);
     await page.keyboard.press('KeyS');
-    for (let i = 0; i < 9; i++) await page.keyboard.press('ArrowDown');
+    for (let i = 0; i < 8; i++) await page.keyboard.press('ArrowDown');
     await expect(live(page)).toHaveText('ORDERS OF 1 TIN: 55 %.');
     await page.keyboard.press('ArrowRight');
     await expect(live(page)).toHaveText('ORDERS OF 1 TIN: 56 %. MUST TOTAL 100.');

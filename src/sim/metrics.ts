@@ -1,3 +1,4 @@
+import {WALK_IN_KINDS, type WalkInKind} from './params';
 import type {TimelineEvent} from './timeline';
 
 export interface Metrics {
@@ -5,6 +6,8 @@ export interface Metrics {
   walkInsServed: number;
   walkInsLost: number;
   salesLostGbp: number;
+  /** Walk-ins who gave up, and what they would have spent, by type. */
+  lostByType: Record<WalkInKind, {count: number; gbp: number}>;
   mixOrders: number;
   ordersMixedInStore: number;
   tinsMixedInStore: number;
@@ -20,6 +23,7 @@ export function summarise(timeline: readonly TimelineEvent[]): Metrics {
     walkInsServed: 0,
     walkInsLost: 0,
     salesLostGbp: 0,
+    lostByType: Object.fromEntries(WALK_IN_KINDS.map(k => [k, {count: 0, gbp: 0}])) as Metrics['lostByType'],
     mixOrders: 0,
     ordersMixedInStore: 0,
     tinsMixedInStore: 0,
@@ -38,6 +42,8 @@ export function summarise(timeline: readonly TimelineEvent[]): Metrics {
       case 'walk-in-lost':
         m.walkInsLost++;
         m.salesLostGbp += e.saleGbp;
+        m.lostByType[e.kind].count++;
+        m.lostByType[e.kind].gbp += e.saleGbp;
         break;
       case 'order-arrive':
         m.mixOrders++;

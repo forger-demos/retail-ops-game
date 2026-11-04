@@ -102,7 +102,7 @@ export function runScenario(scenario: ScenarioName, arrivals: Arrivals, params: 
   const serve = (at: number, who: number, walkIn: WalkInArrival): void => {
     const until = at + params.serviceMinutes;
     staff[who] = 'serving';
-    timeline.push({type: 'walk-in-served', at, walkIn: walkIn.id, staff: who, until});
+    timeline.push({type: 'walk-in-served', at, walkIn: walkIn.id, kind: walkIn.kind, staff: who, until});
     queue.push({kind: 'free', at: until, staff: who});
   };
 
@@ -134,7 +134,7 @@ export function runScenario(scenario: ScenarioName, arrivals: Arrivals, params: 
         break;
       }
       case 'arrive-walk-in': {
-        timeline.push({type: 'walk-in-arrive', at: p.at, walkIn: p.walkIn.id, freeStaff: freeStaff(), staffOnFloor: staffOnFloor()});
+        timeline.push({type: 'walk-in-arrive', at: p.at, walkIn: p.walkIn.id, kind: p.walkIn.kind, freeStaff: freeStaff(), staffOnFloor: staffOnFloor()});
         const who = staff.indexOf('idle');
         if (who >= 0) serve(p.at, who, p.walkIn);
         else {
@@ -160,7 +160,7 @@ export function runScenario(scenario: ScenarioName, arrivals: Arrivals, params: 
         const index = waiting.findIndex(w => w.kind === 'walk-in' && w.walkIn === walkIn);
         if (index >= 0) {
           waiting.splice(index, 1);
-          timeline.push({type: 'walk-in-lost', at: p.at, walkIn: walkIn.id, saleGbp: params.averageSaleGbp});
+          timeline.push({type: 'walk-in-lost', at: p.at, walkIn: walkIn.id, kind: walkIn.kind, saleGbp: walkIn.valueGbp});
         }
         break;
       }

@@ -1,6 +1,6 @@
 import type {StyleMoment} from '../flow/flow';
 import type {ReplayState, StaffView, WaitingView} from '../render/replay';
-import type {Params} from '../sim/params';
+import {type Params, WALK_IN_KINDS} from '../sim/params';
 import type {ShopView} from './shop';
 
 /** The trade customer's walk-in number: it picks the hard hat and hi-vis look. */
@@ -15,7 +15,7 @@ const TEXT: Readonly<Record<StyleMoment, string>> = {
 
 /** A queue of three whose front walk-in has used `frontShare` of their patience, the rest less. */
 function queue(first: number, minute: number, patience: number, frontShare: number): WaitingView[] {
-  return [frontShare, 0.55, 0.2].map((share, i) => ({walkIn: first + i, since: minute - share * patience}));
+  return [frontShare, 0.55, 0.2].map((share, i) => ({walkIn: first + i, kind: WALK_IN_KINDS[(first + i) % WALK_IN_KINDS.length] ?? 'small', since: minute - share * patience}));
 }
 
 /**
@@ -29,7 +29,7 @@ export function styleFrame(moment: StyleMoment, params: Params): Omit<ShopView, 
   if (moment === 'dilemma') {
     const minute = 134;
     const staff: StaffView = {staff: 0, activity: 'serving', since: minute - 1, backFromMixAt: null, mix: null};
-    state = {...base, minute, lost: 3, lostGbp: 285, staff: [staff], serving: [{walkIn: TRADE_WALK_IN, staff: 0}], waiting: queue(1, minute, patience, 0.9), losses: []};
+    state = {...base, minute, lost: 3, lostGbp: 285, staff: [staff], serving: [{walkIn: TRADE_WALK_IN, kind: 'advice', staff: 0}], waiting: queue(1, minute, patience, 0.9), losses: []};
   } else {
     const minute = 149;
     const since = minute - 2 * params.minutesPerTin - 3;
@@ -42,7 +42,7 @@ export function styleFrame(moment: StyleMoment, params: Params): Omit<ShopView, 
       backFromMixAt: null,
       mix: {tin: Math.floor((minute - since) / params.minutesPerTin) + 1, tins: ORDER_TINS, progress: done},
     };
-    state = {...base, minute, lost: 4, lostGbp: 380, staff: [staff], serving: [], waiting: queue(2, minute, patience, 0.85), losses: [{walkIn: 1, at: minute - 1.5, saleGbp: 95}]};
+    state = {...base, minute, lost: 4, lostGbp: 380, staff: [staff], serving: [], waiting: queue(2, minute, patience, 0.85), losses: [{walkIn: 1, kind: 'small', at: minute - 1.5, saleGbp: 95}]};
   }
   const text = TEXT[moment];
   return {scenario: 'today', state, params, text, chars: text.length, ...(moment === 'dilemma' ? {bubble: BUBBLE} : {})};

@@ -75,7 +75,7 @@ describe('SERVE', () => {
     expect(reason(today, [], 0, 'serve')).toBe('nobody-waiting');
     const commands = play(today, [[1, 'serve']]);
     const served = ofType(playRound(today, commands).timeline, 'walk-in-served');
-    expect(served).toEqual([{type: 'walk-in-served', at: 1, walkIn: 1, staff: 0, until: 1 + DEFAULT_PARAMS.serviceMinutes}]);
+    expect(served).toEqual([{type: 'walk-in-served', at: 1, walkIn: 1, kind: 'small', staff: 0, until: 1 + DEFAULT_PARAMS.serviceMinutes}]);
     expect(reason(today, commands, 2, 'serve')).toBe('busy-serving');
   });
 
@@ -109,6 +109,9 @@ describe('SEND TO HUB', () => {
   });
 });
 
+const servedValue = (round: Round, timeline: readonly TimelineEvent[]): number =>
+  timeline.reduce((sum, e) => sum + (e.type === 'walk-in-served' ? (round.arrivals.walkIns.find(w => w.id === e.walkIn)?.valueGbp ?? 0) : 0), 0);
+
 describe('round results', () => {
   test('come from the simulation metrics of the choices made, and replay identically', () => {
     const commands = play(today, [[0, 'mix']]);
@@ -116,7 +119,7 @@ describe('round results', () => {
     expect(playRound(today, commands)).toEqual(once);
     const {metrics} = once.result;
     expect(once.result).toMatchObject({served: metrics.walkInsServed, walkedOut: metrics.walkInsLost, lostGbp: metrics.salesLostGbp});
-    expect(once.result.capturedGbp).toBe(metrics.walkInsServed * DEFAULT_PARAMS.averageSaleGbp + (today.arrivals.mixOrders[0]?.valueGbp ?? 0));
+    expect(once.result.capturedGbp).toBe(servedValue(today, once.timeline) + (today.arrivals.mixOrders[0]?.valueGbp ?? 0));
   });
 
   test('sending the trade order to the hub loses fewer walk-ins than mixing it, for the same arrivals and the same serving', () => {
@@ -128,9 +131,9 @@ describe('round results', () => {
   });
 
   test('an order nobody mixes is a sale not made', () => {
-    const {result} = playRound(today, serveEveryone(today));
+    const {result, timeline} = playRound(today, serveEveryone(today));
     expect(result.ordersLeft).toBeGreaterThanOrEqual(1);
-    expect(result.capturedGbp).toBe(result.served * DEFAULT_PARAMS.averageSaleGbp);
+    expect(result.capturedGbp).toBe(servedValue(today, timeline));
   });
 
   test('a walk-in served exactly at the patience limit is not lost', () => {

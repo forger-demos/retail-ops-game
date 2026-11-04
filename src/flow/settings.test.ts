@@ -89,6 +89,16 @@ describe('the menu editor', () => {
     expect(problem(change({...off, cursor: at('band1')}, -1).settings)).toBeNull();
   });
 
+  test('walk-in types are editable and their shares must total 100', () => {
+    const more = change(on('type-share-advice'), 1);
+    expect(more.settings.params.walkInTypes.find(t => t.kind === 'advice')?.share).toBeCloseTo(0.3, 10);
+    expect(problem(more.settings)).toBe('TYPES MUST TOTAL 100');
+    expect(problem(change({...more, cursor: at('type-share-small')}, -1).settings)).toBeNull();
+    const dearer = change(on('type-value-sample'), 1).settings;
+    expect(dearer.params.walkInTypes.find(t => t.kind === 'sample')?.valueGbp).toBe(35);
+    expect(problem(dearer)).toBeNull();
+  });
+
   test('reset restores the documented defaults', () => {
     const edited = change(change(on('stores'), 1), 1);
     expect(edited.settings).not.toEqual(DEFAULT_SETTINGS);
@@ -118,6 +128,6 @@ describe('the menu editor', () => {
 
   test('the live-region text names the row and its value', () => {
     expect(describeRow(on('staff'))).toBe('STAFF ON FLOOR: 1');
-    expect(describeRow(on('sale'))).toBe('AVERAGE SALE: 95 GBP');
+    expect(describeRow(on('type-value-small'))).toBe('SMALL VALUE: 55 GBP');
   });
 });
