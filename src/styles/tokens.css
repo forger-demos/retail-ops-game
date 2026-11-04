@@ -1,0 +1,7 @@
+/* The only place a colour is written. The screen draws in these four shades, darkest first. */
+:root {
+  --gb-0: #142b17;
+  --gb-1: #3d6b38;
+  --gb-2: #8cae4c;
+  --gb-3: #d0e3a0;
+}

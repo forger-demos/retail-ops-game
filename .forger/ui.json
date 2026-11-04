@@ -1,13 +1,13 @@
 {
-  "paths": ["src/**/*.tsx", "src/**/*.css", "src/**/*.vue", "src/**/*.svelte", "public/**"],
+  "paths": ["src/**/*.ts", "src/**/*.css", "index.html"],
   "tokens": ["src/styles/tokens.css"],
   "start": "bun run dev",
-  "url": "http://localhost:3000",
+  "url": "http://localhost:3107",
   "routes": ["/"],
   "viewports": [
     {"name": "phone", "width": 390, "height": 844},
     {"name": "desktop", "width": 1280, "height": 800}
   ],
-  "themes": ["light", "dark"],
+  "themes": ["light"],
   "ready_timeout": 60
 }

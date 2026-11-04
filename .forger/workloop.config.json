@@ -1,7 +1,7 @@
 {
   "repo": null,
   "worker_command": "forger:auto-ticket",
-  "gates": "bun run check && bun /home/diego/work/forger/plugins/forger/bin/work.ts check",
+  "gates": "bun install --frozen-lockfile && bun run check && bun \"$HOME/work/forger/plugins/forger/bin/work.ts\" check",
   "base_branch": "main",
   "model_by_priority": {
     "P0": {

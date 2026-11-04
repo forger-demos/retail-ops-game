@@ -9,6 +9,10 @@
           "sha256": "026931049666910e43f4c1e28bd1c687c5c4b93f0c229d54a3555710c4bed8e2"
         },
         {
+          "path": ".forger/hooks.json",
+          "sha256": "c0e780d9a86064bcff3d239d7da22d6fde5a33db20f627582d3757b45c1706c5"
+        },
+        {
           "path": ".forger/process.md",
           "sha256": "d3c1141e9a87e4a54a7a5631a47ccaa5e198cadcff5c94ea1d1727c178c4dd2a"
         },

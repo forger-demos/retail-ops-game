@@ -6,3 +6,7 @@
 .forger/events.jsonl
 .forger/declined.json
 .forger/verdicts/
+node_modules/
+dist/
+test-results/
+playwright-report/
