@@ -8,6 +8,7 @@
     "test": "bun test src && playwright test",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
+    "sim": "bun scripts/sim.ts",
     "check": "bun run typecheck && bun run lint && bun run build && bun run test"
   },
   "devDependencies": {

@@ -22,6 +22,15 @@ bun run check   # typecheck, lint, build, unit tests, then browser tests against
 
 `bun run test` runs the unit tests (`src/**/*.test.ts`) and the Playwright tests (`tests/e2e/`); the browser tests open the built file, so build first.
 
+## Simulate
+
+```sh
+bun run sim                  # both scenarios' metrics for the default seed, as a table
+bun run sim --json --seed 7  # the same as JSON, for another seed
+```
+
+The simulation is pure and seeded: the same seed and parameters always give the same shift, and the today and hub runs of one seed share their arrivals.
+
 ## Build and present
 
 ```sh
@@ -32,6 +41,7 @@ This writes `dist/paint-rush.html`, one self-contained file with every script, s
 
 ## Layout
 
+- `src/sim/` - the simulation: parameters, seeded arrivals, the event engine, the timeline and its metrics. Imports nothing from the DOM or the renderer.
 - `src/render/` - the screen, palette, font and sprites.
 - `src/scenes/` - what is drawn on each screen.
 - `src/styles/tokens.css` - the four colours; the only file that writes a colour.
