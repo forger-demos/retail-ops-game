@@ -15,3 +15,5 @@ Visual artefacts that have been superseded, kept in running order so this folder
 - `02-shop-scene-screenshots/` - the title and shop-scene screenshots as `shop-scene` shipped them, archived when `two-run-results` refreshed the set.
 - `03-two-run-results-wireframe/` - the approved grey-box wireframe for the pitch flow and comparison, archived when `two-run-results` shipped.
 - `04-two-run-results-screenshots/` - the full screenshot set as `two-run-results` shipped it, archived when `tap-input` added the reshuffle button.
+- `05-settings-wireframe/` - the approved grey-box wireframe for the settings menu, archived when `settings` shipped.
+- `06-tap-input-screenshots/` - the full screenshot set as `tap-input` left it, archived when `settings` added the menu screen.

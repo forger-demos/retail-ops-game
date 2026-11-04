@@ -14,7 +14,7 @@ export function promptVisible(elapsedMs: number, reducedMotion: boolean): boolea
   return reducedMotion || elapsedMs < HOLD_MS || Math.floor((elapsedMs - HOLD_MS) / BLINK_MS) % 2 === 0;
 }
 
-export function drawTitle(plot: Plot, prompt: string, showPrompt: boolean): void {
+export function drawTitle(plot: Plot, prompt: string, showPrompt: boolean, hint = ''): void {
   plot(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 3);
   plot(4, 4, SCREEN_WIDTH - 8, 2, 0);
   plot(4, SCREEN_HEIGHT - 6, SCREEN_WIDTH - 8, 2, 0);
@@ -25,4 +25,5 @@ export function drawTitle(plot: Plot, prompt: string, showPrompt: boolean): void
   drawText(plot, TITLE, centred(TITLE, 2), 22, 0, 2);
   drawSprite(plot, TIN, (SCREEN_WIDTH - 32) / 2, 50, 2);
   if (showPrompt) drawText(plot, prompt, centred(prompt, 1), 108, 0, 1);
+  if (hint !== '') drawText(plot, hint, centred(hint, 1), 122, 1, 1);
 }

@@ -3,7 +3,8 @@ import type {ScenarioName} from '../sim/params';
 
 /** The pitch in order; SPACE walks it and the comparison loops back to the same day. */
 export const STEPS = ['title', 'today', 'today-results', 'hub', 'comparison'] as const;
-export type Step = (typeof STEPS)[number];
+/** The settings menu sits beside the pitch, not in it: it opens from the title and returns there. */
+export type Step = (typeof STEPS)[number] | 'settings';
 
 export interface FlowState {
   step: Step;
@@ -20,13 +21,23 @@ export function replayOf(step: Step): ScenarioName | null {
 }
 
 export function advance(state: FlowState): FlowState {
+  if (state.step === 'settings') return state;
   const i = STEPS.indexOf(state.step);
   return {...state, step: state.step === 'comparison' ? 'today' : (STEPS[i + 1] ?? 'title')};
 }
 
-/** A new day is drawn only from the comparison, so the two runs being compared always share a seed. */
+/** A new day is drawn only from the comparison or the menu, so the two runs being compared always share a seed. */
 export function reshuffle(state: FlowState): FlowState {
+  if (state.step === 'settings') return {...state, seed: state.seed + 1};
   return state.step === 'comparison' ? {step: 'today', seed: state.seed + 1} : state;
+}
+
+export function openSettings(state: FlowState): FlowState {
+  return state.step === 'title' ? {...state, step: 'settings'} : state;
+}
+
+export function closeSettings(state: FlowState): FlowState {
+  return state.step === 'settings' ? {...state, step: 'title'} : state;
 }
 
 export interface DeepLink {
@@ -47,6 +58,8 @@ export function fromQuery(get: (key: string) => string | null): DeepLink {
       return at('today-results');
     case 'comparison':
       return at('comparison');
+    case 'settings':
+      return at('settings');
     default:
       return at('title');
   }
