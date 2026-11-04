@@ -1,13 +1,26 @@
 import {describe, expect, test} from 'bun:test';
 
-import {keyAction, TAP_GAP_MS, tapAccepted} from './input';
+import {keyAction, REPEATABLE, TAP_GAP_MS, tapAccepted} from './input';
 
 describe('input actions', () => {
   test('SPACE advances, R reshuffles, other keys do nothing', () => {
     expect(keyAction('Space')).toBe('advance');
     expect(keyAction('KeyR')).toBe('reshuffle');
-    expect(keyAction('Enter')).toBeNull();
     expect(keyAction('KeyM')).toBeNull();
+  });
+
+  test('S opens the menu, the arrows move and change values, Enter and Escape go back', () => {
+    expect(keyAction('KeyS')).toBe('settings');
+    expect(keyAction('ArrowUp')).toBe('up');
+    expect(keyAction('ArrowDown')).toBe('down');
+    expect(keyAction('ArrowLeft')).toBe('decrease');
+    expect(keyAction('ArrowRight')).toBe('increase');
+    expect(keyAction('Enter')).toBe('back');
+    expect(keyAction('Escape')).toBe('back');
+  });
+
+  test('only the arrows repeat when held', () => {
+    expect([...REPEATABLE].sort()).toEqual(['decrease', 'down', 'increase', 'up']);
   });
 
   test('the first tap always counts', () => {

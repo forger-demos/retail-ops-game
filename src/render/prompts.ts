@@ -4,6 +4,8 @@ export interface Prompts {
   title: string;
   results: string;
   comparison: string;
+  /** Under the title prompt; empty when a button on screen already says it. */
+  settingsHint: string;
   /** How a sentence tells the listener to advance, for the canvas labels. */
   verb: string;
 }
@@ -13,12 +15,14 @@ const PROMPTS: Readonly<Record<InputMode, Prompts>> = {
     title: 'PRESS SPACE',
     results: 'SPACE: SAME DAY WITH A CENTRAL HUB.',
     comparison: 'SPACE: REPLAY THIS DAY. R: RESHUFFLE THE DAY.',
+    settingsHint: 'S: SETTINGS',
     verb: 'Press space',
   },
   touch: {
     title: 'TAP TO START',
     results: 'TAP: SAME DAY WITH A CENTRAL HUB.',
     comparison: 'TAP: REPLAY THIS DAY. OR USE RESHUFFLE.',
+    settingsHint: '',
     verb: 'Tap',
   },
 };

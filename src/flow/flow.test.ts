@@ -1,7 +1,7 @@
 import {describe, expect, test} from 'bun:test';
 
 import {DEFAULT_SEED} from '../sim/cli';
-import {advance, fromQuery, replayOf, reshuffle, startFlow, STEPS, type FlowState} from './flow';
+import {advance, closeSettings, fromQuery, openSettings, replayOf, reshuffle, startFlow, STEPS, type FlowState} from './flow';
 
 const query = (q: string) => {
   const p = new URLSearchParams(q);
@@ -25,6 +25,18 @@ describe('the pitch flow', () => {
     for (const step of STEPS.filter(x => x !== 'comparison')) expect(reshuffle({step, seed: 7})).toEqual({step, seed: 7});
   });
 
+  test('settings open from the title only, return to the title, and keep the day', () => {
+    expect(openSettings({step: 'title', seed: 7})).toEqual({step: 'settings', seed: 7});
+    for (const step of STEPS.filter(x => x !== 'title')) expect(openSettings({step, seed: 7})).toEqual({step, seed: 7});
+    expect(closeSettings({step: 'settings', seed: 9})).toEqual({step: 'title', seed: 9});
+    expect(closeSettings({step: 'hub', seed: 9})).toEqual({step: 'hub', seed: 9});
+  });
+
+  test('SPACE does nothing in the menu, and R there draws a new day without leaving it', () => {
+    expect(advance({step: 'settings', seed: 7})).toEqual({step: 'settings', seed: 7});
+    expect(reshuffle({step: 'settings', seed: 7})).toEqual({step: 'settings', seed: 8});
+  });
+
   test('only the two runs are replays', () => {
     expect(STEPS.map(replayOf)).toEqual([null, 'today', null, 'hub', null]);
   });
@@ -35,6 +47,7 @@ describe('the pitch flow', () => {
     expect(fromQuery(query('scene=shop&scenario=hub&minute=x'))).toEqual({flow: {step: 'hub', seed: DEFAULT_SEED}, minute: 0});
     expect(fromQuery(query('scene=results&seed=4')).flow).toEqual({step: 'today-results', seed: 4});
     expect(fromQuery(query('scene=comparison&seed=-2')).flow).toEqual({step: 'comparison', seed: DEFAULT_SEED});
+    expect(fromQuery(query('scene=settings')).flow).toEqual({step: 'settings', seed: DEFAULT_SEED});
     expect(fromQuery(query('scene=nope')).flow.step).toBe('title');
   });
 });

@@ -49,6 +49,11 @@ body {
   -webkit-user-select: none;
 }
 
+.screen-wrap {
+  position: relative;
+  line-height: 0;
+}
+
 /* Fixed in the corner so the screen's whole-pixel scale never changes when a button appears. */
 .controls {
   position: fixed;
@@ -84,4 +89,31 @@ body {
 
 .controls button[hidden] {
   display: none;
+}
+
+/* In the menu the buttons sit over the clear strip along the bottom of the screen: 32 of its 144 rows. */
+body[data-step='settings'] .controls {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: calc(100% * 32 / 144);
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px;
+  box-sizing: border-box;
+}
+
+body[data-step='settings'] .controls button {
+  flex: 1 1 auto;
+  padding: 0 4px;
+  font-size: 12px;
+}
+
+body[data-step='settings'] #decrease,
+body[data-step='settings'] #increase {
+  flex: 0 0 44px;
+  font-size: 20px;
+}
+
+.controls button[aria-disabled='true'] {
+  opacity: 0.5;
 }

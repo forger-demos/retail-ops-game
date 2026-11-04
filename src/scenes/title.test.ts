@@ -47,4 +47,15 @@ describe('title screen', () => {
     expect(promptVisible(HOLD_MS + BLINK_MS * 2, false)).toBe(true);
     expect(promptVisible(HOLD_MS + BLINK_MS, true)).toBe(true);
   });
+
+  test('the settings hint is drawn under the prompt and stays inside the screen', () => {
+    const hint = 'S: SETTINGS';
+    const calls: Call[] = [];
+    drawTitle((x, y, w, h, s) => calls.push([x, y, w, h, s]), 'PRESS SPACE', true, hint);
+    expect(calls.length).toBeGreaterThan(draw(true).length);
+    for (const [x, y, w, h] of calls) {
+      expect(x + w).toBeLessThanOrEqual(SCREEN_WIDTH);
+      expect(y + h).toBeLessThanOrEqual(SCREEN_HEIGHT);
+    }
+  });
 });

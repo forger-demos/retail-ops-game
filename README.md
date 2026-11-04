@@ -41,6 +41,8 @@ This writes `dist/paint-rush.html`, one self-contained file with every script, s
 
 SPACE walks the pitch: the title, today's replay, today's results, the same day with the hub, then the comparison of the two with the sales saved per day, week, year and across the estate. During a replay SPACE skips to the next narration beat. At the comparison SPACE replays the same day and R reshuffles it (the next seed). On a phone or tablet a tap anywhere on the screen does what SPACE does, the prompts read TAP, and a RESHUFFLE button appears at the comparison; taps closer together than a double tap count once. Each screen's text is also written to a visually hidden live region.
 
+S on the title opens the settings menu (a SETTINGS button does on a phone). It lists every parameter of the simulation plus the replay speed: up and down choose a row, left and right change it, and on a phone you tap a row and use the on-screen - and + buttons. RESHUFFLE draws a new day, RESET restores the defaults, and BACK (or Enter or Escape) returns to the title. Order-size percentages must total 100 before BACK is allowed. Values are kept in the browser's storage and used by the next run; when storage is blocked they still apply for the session and the menu says they are not saved.
+
 To open a step directly, for rehearsal, add `?scene=` to the URL: `shop` for a replay (with `&scenario=hub` for the hub run and `&minute=<shop minute>` to start part-way through), `results` for today's results, `comparison` for the comparison. `&seed=<n>` picks the day.
 
 ## Layout
@@ -48,5 +50,5 @@ To open a step directly, for rehearsal, add `?scene=` to the URL: `shop` for a r
 - `src/sim/` - the simulation: parameters, seeded arrivals, the event engine, the timeline, its metrics and their extrapolation to a year and the estate. Imports nothing from the DOM or the renderer.
 - `src/render/` - the screen, palette, font, sprites, the text box, and the pure replay state and narration derived from a timeline.
 - `src/scenes/` - what is drawn on each screen.
-- `src/flow/` - the order of the pitch, the deep links into it, and the input actions that keys, taps and buttons share, all pure.
+- `src/flow/` - the order of the pitch, the deep links into it, the input actions that keys, taps and buttons share, and the settings model and its storage, all pure.
 - `src/styles/tokens.css` - the four colours; the only file that writes a colour.

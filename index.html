@@ -11,11 +11,18 @@
 <body>
   <main class="stage">
     <h1 class="visually-hidden">PAINT RUSH</h1>
-    <canvas id="screen" role="img" aria-label="PAINT RUSH title screen. Press space to start."></canvas>
-    <p class="visually-hidden" id="prompt" aria-live="polite">PRESS SPACE</p>
-    <div class="controls">
-      <button type="button" id="reshuffle" hidden>RESHUFFLE</button>
+    <div class="screen-wrap">
+      <canvas id="screen" role="img" aria-label="PAINT RUSH title screen. Press space to start."></canvas>
+      <div class="controls">
+        <button type="button" id="open-settings" hidden>SETTINGS</button>
+        <button type="button" id="decrease" aria-label="Decrease value" hidden>-</button>
+        <button type="button" id="increase" aria-label="Increase value" hidden>+</button>
+        <button type="button" id="reshuffle" hidden>RESHUFFLE</button>
+        <button type="button" id="reset" hidden>RESET</button>
+        <button type="button" id="back" hidden>BACK</button>
+      </div>
     </div>
+    <p class="visually-hidden" id="prompt" aria-live="polite">PRESS SPACE</p>
   </main>
   <script type="module" src="/src/main.ts"></script>
 </body>

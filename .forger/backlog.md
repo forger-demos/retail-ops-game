@@ -13,7 +13,7 @@ Plan: [docs/plan-paint-rush.md](../docs/plan-paint-rush.md). `backlog.json` is t
 
 ## P1
 
-- `settings` - menu to edit every parameter (after two-run-results). Wireframe approved.
+- `settings` - menu to edit every parameter (after two-run-results). Wireframe approved. Done.
 
 ## P2
 
