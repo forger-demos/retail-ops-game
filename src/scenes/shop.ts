@@ -76,6 +76,8 @@ export interface ShopView {
   text: string;
   /** Characters of `text` typed out so far. */
   chars: number;
+  /** Whether sound is on; the status bar shows it. */
+  sound: boolean;
 }
 
 function clip(plot: Plot, r: Rect): Plot {
@@ -102,6 +104,27 @@ function drawStatus(plot: Plot, view: ShopView): void {
   drawText(plot, `SERVED ${state.served}`, 2, 11, 3);
   const lost = `LOST ${state.lost} GBP${state.lostGbp}`;
   drawText(plot, lost, SCREEN_WIDTH - 2 - textWidth(lost), 11, 2);
+  drawSpeaker(plot, view.sound);
+}
+
+/** A speaker in the gap between the scenario name and the clock: waves when sound is on, a cross when it is off. */
+export const SPEAKER: Rect = {x: 108, y: 3, w: 12, h: 7};
+
+function drawSpeaker(plot: Plot, on: boolean): void {
+  const {x, y} = SPEAKER;
+  plot(x, y + 2, 2, 3, 3);
+  plot(x + 2, y + 1, 1, 5, 3);
+  plot(x + 3, y, 1, 7, 3);
+  if (on) {
+    plot(x + 6, y + 2, 1, 3, 3);
+    plot(x + 8, y + 1, 1, 5, 3);
+    plot(x + 10, y, 1, 7, 3);
+  } else {
+    for (let i = 0; i < 5; i++) {
+      plot(x + 6 + i, y + 1 + i, 1, 1, 2);
+      plot(x + 10 - i, y + 1 + i, 1, 1, 2);
+    }
+  }
 }
 
 function drawFloor(plot: Plot): void {

@@ -35,7 +35,7 @@ describe('prompts', () => {
   });
 
   test('the keyboard title points at S, and the touch title leaves it to the button', () => {
-    expect(promptsFor('keyboard').settingsHint).toBe('S: SETTINGS');
+    expect(promptsFor('keyboard').settingsHint).toBe('S: SETTINGS  M: SOUND');
     expect(promptsFor('touch').settingsHint).toBe('');
   });
 });

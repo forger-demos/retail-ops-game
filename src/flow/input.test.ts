@@ -6,7 +6,8 @@ describe('input actions', () => {
   test('SPACE advances, R reshuffles, other keys do nothing', () => {
     expect(keyAction('Space')).toBe('advance');
     expect(keyAction('KeyR')).toBe('reshuffle');
-    expect(keyAction('KeyM')).toBeNull();
+    expect(keyAction('KeyM')).toBe('sound');
+    expect(keyAction('KeyZ')).toBeNull();
   });
 
   test('S opens the menu, the arrows move and change values, Enter and Escape go back', () => {

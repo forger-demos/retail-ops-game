@@ -5,10 +5,10 @@ import {replayState, type ReplayState, type StaffView} from '../render/replay';
 import {SCREEN_HEIGHT, SCREEN_WIDTH} from '../render/screen-size';
 import {compare} from '../sim/engine';
 import {DEFAULT_PARAMS, type ScenarioName} from '../sim/params';
-import {BAY, DOOR_SPOT, drawShop, FLOOR, inside, LOSS_MINUTES, QUEUE_SLOTS, type Rect, staffPosition, VAN_MINUTES, WALK_MINUTES} from './shop';
+import {BAY, DOOR_SPOT, drawShop, FLOOR, inside, LOSS_MINUTES, QUEUE_SLOTS, type Rect, staffPosition, SPEAKER, VAN_MINUTES, WALK_MINUTES} from './shop';
 
 /** Renders into a shade buffer, failing on any plot outside the screen or outside the four shades. */
-function render(state: ReplayState, scenario: ScenarioName = 'today', text = 'HELLO'): Uint8Array {
+function render(state: ReplayState, scenario: ScenarioName = 'today', text = 'HELLO', sound = false): Uint8Array {
   const buf = new Uint8Array(SCREEN_WIDTH * SCREEN_HEIGHT).fill(9);
   const plot: Plot = (x, y, w, h, shade) => {
     if (x < 0 || y < 0 || x + w > SCREEN_WIDTH || y + h > SCREEN_HEIGHT || ![0, 1, 2, 3].includes(shade)) {
@@ -16,7 +16,7 @@ function render(state: ReplayState, scenario: ScenarioName = 'today', text = 'HE
     }
     for (let yy = y; yy < y + h; yy++) buf.fill(shade, yy * SCREEN_WIDTH + x, yy * SCREEN_WIDTH + x + w);
   };
-  drawShop(plot, {scenario, state, params: DEFAULT_PARAMS, text, chars: text.length});
+  drawShop(plot, {scenario, state, params: DEFAULT_PARAMS, text, chars: text.length, sound});
   return buf;
 }
 
@@ -42,6 +42,16 @@ const base = (over: Partial<ReplayState> = {}): ReplayState => ({
 });
 
 describe('shop scene', () => {
+  test('the status bar shows whether sound is on', () => {
+    const state = replayState(compare(1, DEFAULT_PARAMS).today.timeline, 2, DEFAULT_PARAMS.shiftMinutes, 10);
+    const region = (buf: Uint8Array): number[] => {
+      const out: number[] = [];
+      for (let y = SPEAKER.y; y < SPEAKER.y + SPEAKER.h; y++) for (let x = SPEAKER.x; x < SPEAKER.x + SPEAKER.w; x++) out.push(buf[y * SCREEN_WIDTH + x] ?? 9);
+      return out;
+    };
+    expect(region(render(state, 'today', 'HELLO', true))).not.toEqual(region(render(state, 'today', 'HELLO', false)));
+  });
+
   test('every frame of a replay fills the screen in the four shades and stays on it', () => {
     const c = compare(1, DEFAULT_PARAMS);
     for (const run of [c.today, c.hub]) {
