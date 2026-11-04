@@ -39,9 +39,11 @@ bun run build
 
 This writes `dist/paint-rush.html`, one self-contained file with every script, style and asset inlined. Copy it to the presenting laptop and open it straight from disk (file://); it needs no network or server. Make the browser full screen and press SPACE to advance.
 
+SPACE on the title starts the replay of today's shift; during a replay SPACE skips to the next narration beat. To open a replay directly, for rehearsal, add `?scene=shop` to the URL, with `&scenario=hub` for the hub run and `&minute=<shop minute>` to start part-way through.
+
 ## Layout
 
 - `src/sim/` - the simulation: parameters, seeded arrivals, the event engine, the timeline and its metrics. Imports nothing from the DOM or the renderer.
-- `src/render/` - the screen, palette, font and sprites.
+- `src/render/` - the screen, palette, font, sprites, the text box, and the pure replay state and narration derived from a timeline.
 - `src/scenes/` - what is drawn on each screen.
 - `src/styles/tokens.css` - the four colours; the only file that writes a colour.

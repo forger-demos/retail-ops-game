@@ -33,3 +33,10 @@ body {
   white-space: nowrap;
   border: 0;
 }
+
+.fallback {
+  max-width: 32rem;
+  padding: 1rem;
+  font: 1rem/1.5 monospace;
+  color: var(--gb-3);
+}

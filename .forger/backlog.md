@@ -6,7 +6,7 @@ Plan: [docs/plan-paint-rush.md](../docs/plan-paint-rush.md). `backlog.json` is t
 
 - `scaffold` - project scaffold, Game Boy canvas, offline single-file build.
 - `sim-engine` - deterministic simulation of the today and hub scenarios (after scaffold).
-- `shop-scene` - animated replay of one scenario (after sim-engine). Wireframe approved.
+- `shop-scene` - animated replay of one scenario (after sim-engine). Done.
 - `two-run-results` - title, today, results, hub, comparison (after shop-scene). Wireframe approved.
 
 ## P1

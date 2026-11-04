@@ -10,3 +10,5 @@ Visual artefacts that have been superseded, kept in running order so this folder
 - Add a line to the list below for each entry: what it shows and which ticket archived it.
 
 ## Entries
+
+- `01-shop-scene-wireframe/` - the approved grey-box wireframe for the shop scene, archived when `shop-scene` shipped.
