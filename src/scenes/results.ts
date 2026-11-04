@@ -28,8 +28,8 @@ function drawRow(plot: Plot, row: Row, y: number): void {
   row.values.forEach((v, i) => drawText(plot, v, at.values[i] ?? 0, y, 0));
 }
 
-export function drawResults(plot: Plot, rows: readonly Row[], noLoss: boolean, prompt: string): void {
-  header(plot, RESULTS_TITLE);
+export function drawResults(plot: Plot, rows: readonly Row[], noLoss: boolean, prompt: string, title = RESULTS_TITLE): void {
+  header(plot, title);
   rows.forEach((row, i) => drawRow(plot, row, HEADER_H + 8 + i * LINE_H * 1.5));
   if (noLoss) drawText(plot, NO_LOSS, Math.floor((SCREEN_WIDTH - textWidth(NO_LOSS)) / 2), TEXTBOX.y - 14, 1);
   drawTextbox(plot, prompt);

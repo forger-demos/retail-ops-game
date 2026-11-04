@@ -6,6 +6,8 @@ import {expect, type Page, test} from '@playwright/test';
 
 const BUILD = join(import.meta.dirname, '../../dist/paint-rush.html');
 const URL = pathToFileURL(BUILD).href;
+/** The autoplay pitch: SPACE on its title goes straight to the full-shift replay. */
+const PRESENTER = `${URL}?mode=presenter`;
 
 test.beforeAll(() => {
   if (!existsSync(BUILD)) throw new Error(`${BUILD} is missing; run \`bun run build\` first`);
@@ -31,7 +33,7 @@ test.describe('on a phone', () => {
     test.setTimeout(90_000);
     const errors: string[] = [];
     page.on('pageerror', e => errors.push(e.message));
-    await page.goto(URL);
+    await page.goto(PRESENTER);
     await expect(page.locator('body')).toHaveAttribute('data-input', 'touch');
     await expect(page.locator('#prompt')).toHaveText('TAP TO START');
     await expect(page.locator('#screen')).toHaveAttribute('aria-label', /Tap to start/);
@@ -88,7 +90,7 @@ test.describe('on a phone', () => {
   });
 
   test('taps cannot zoom or scroll the page', async ({page}) => {
-    await page.goto(URL);
+    await page.goto(PRESENTER);
     expect(await page.locator('.stage').evaluate(el => getComputedStyle(el).touchAction)).toBe('none');
     expect(await page.locator('meta[name="viewport"]').getAttribute('content')).toContain('width=device-width');
     await page.touchscreen.tap(10, 10);
@@ -99,7 +101,7 @@ test.describe('on a phone', () => {
 
 test.describe('on a desktop', () => {
   test('the prompts still say PRESS SPACE and a click advances', async ({page}) => {
-    await page.goto(URL);
+    await page.goto(PRESENTER);
     await expect(page.locator('body')).toHaveAttribute('data-input', 'keyboard');
     await expect(page.locator('#prompt')).toHaveText('PRESS SPACE');
     await page.locator('#screen').click();

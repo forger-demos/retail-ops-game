@@ -18,7 +18,9 @@
 - **Beat** - one line of narration in the text box, derived from the timeline.
 - **Comparison** - the last step of the pitch: both scenarios' lost walk-ins and sales side by side, and the sales saved.
 - **Sales saved** - today's sales lost minus the hub's, for one shift; scaled by trading days per year to a year, by a 52nd of that to a week, and by the number of stores to the estate. It excludes the hub's prep and delivery costs.
-- **Round** - one short played shift in play mode; round 1 mixes everything in store, round 2 sends large orders to the hub.
+- **Round** - one short played shift in play mode; round 1 mixes everything in store, round 2 sends large orders to the hub. It runs at its own, faster time scale and opens on the same scripted trade order in both rounds.
+- **Press** - one player action in a round (serve, mix, send to hub) at a shop minute; a round's presses are its decision policy, and replaying them gives the same round.
+- **Time unmanned** - shop minutes in a round with nobody on the floor.
 - **Play mode** - the default experience: the audience is the shop assistant and chooses every action.
 - **Presenter mode** - the v1 autoplay flow, for narrating without playing.
 - **Debrief** - after the rounds: the full-shift simulation of today vs hub and the extrapolation.

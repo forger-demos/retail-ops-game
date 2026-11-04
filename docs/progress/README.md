@@ -20,3 +20,4 @@ Visual artefacts that have been superseded, kept in running order so this folder
 - `07-settings-screenshots/` - the full screenshot set as `settings` left it, archived when `take-control` added the take-control button to the replay.
 - `08-take-control-screenshots/` - the full screenshot set as `take-control` left it, archived when `chiptune-sound` added the sound button and the status bar speaker.
 - `09-v1-screenshots/` - the full v1 screenshot set, four greens and 8-pixel sprites, as `chiptune-sound` left it, archived when `v2-style-frame` redrew the shop in colour.
+- `10-v2-style-frame-screenshots/` - the full screenshot set as `v2-style-frame` left it, archived when `v2-play-mode` added the played rounds and their console buttons.

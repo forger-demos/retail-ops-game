@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'bun:test';
 
-import {keyAction, REPEATABLE, TAP_GAP_MS, tapAccepted} from './input';
+import {keyAction, PLAY_KEYS, REPEATABLE, TAP_GAP_MS, tapAccepted} from './input';
 
 describe('input actions', () => {
   test('SPACE advances, R reshuffles, other keys do nothing', () => {
@@ -8,6 +8,14 @@ describe('input actions', () => {
     expect(keyAction('KeyR')).toBe('reshuffle');
     expect(keyAction('KeyM')).toBe('sound');
     expect(keyAction('KeyZ')).toBeNull();
+  });
+
+  test('1, 2 and 3 press SERVE, MIX and SEND TO HUB, on the number row or the keypad, as the buttons say', () => {
+    for (const [action, key] of Object.entries(PLAY_KEYS)) {
+      expect(keyAction(`Digit${key}`)).toBe(action as keyof typeof PLAY_KEYS);
+      expect(keyAction(`Numpad${key}`)).toBe(action as keyof typeof PLAY_KEYS);
+    }
+    expect(Object.keys(PLAY_KEYS)).toEqual(['serve', 'mix', 'hub']);
   });
 
   test('S opens the menu, the arrows move and change values, Enter and Escape go back', () => {

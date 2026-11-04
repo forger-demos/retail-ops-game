@@ -1,4 +1,4 @@
-import {advance, closeSettings, fromQuery, openSettings, replayOf, reshuffle, type FlowState, type Step} from './flow/flow';
+import {advance, closeSettings, fromQuery, openSettings, replayOf, reshuffle, roundOf, roundResultOf, roundScenario, type FlowState, type RoundNumber, type Step} from './flow/flow';
 import {type Action, keyAction, REPEATABLE, tapAccepted} from './flow/input';
 import {change, describe, type Editor, moveCursor, openEditor, problem, resetToDefaults, selectVisible} from './flow/settings';
 import {loadSettings, openStorage, saveSettings} from './flow/settings-store';
@@ -13,6 +13,7 @@ import {comparisonAnnouncement, comparisonRows, resultsAnnouncement, savingsRows
 import {revealed} from './render/textbox';
 import {fallbackLines, FALLBACK_HEADLINE} from './scenes/fallback';
 import {drawComparison, drawResults} from './scenes/results';
+import {playView, RESULT_TITLES, roundAnnouncement, roundRows} from './scenes/play';
 import {drawShop} from './scenes/shop';
 import {styleFrame} from './scenes/style-frame';
 import {drawTitle, promptVisible} from './scenes/title';
@@ -22,6 +23,8 @@ import {drawArrivals} from './sim/arrivals';
 import {compare, type Choice, type Comparison, type Decision} from './sim/engine';
 import {savings} from './sim/extrapolate';
 import {SCREEN_HEIGHT} from './render/screen-size';
+import {playButtons, refusal, type PlayButton} from './render/buttons';
+import {optionsAt, playRound, press, ROUND_TIME_SCALE, setupRound, type Command, type PlayAction, type PlayedRound, type Round, type RoundResult} from './sim/round';
 import type {ScenarioName} from './sim/params';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#screen');
@@ -40,8 +43,13 @@ const reshuffleButton = button('reshuffle');
 const controlButton = button('control');
 const soundButton = button('sound');
 const pickButtons: Readonly<Record<Choice, HTMLButtonElement>> = {'walk-in': button('walk-in'), order: button('order')};
+const actions = document.querySelector<HTMLElement>('.actions');
+if (!actions) throw new Error('.actions is missing from index.html');
+const playButtonEls: Readonly<Record<PlayAction, HTMLButtonElement>> = {serve: button('serve'), mix: button('mix'), hub: button('hub')};
 /** Real milliseconds the shift waits for a pick before taking autoplay's, so doing nothing is autoplay. */
 const DECISION_MS = 6000;
+/** Real milliseconds a refused press's reason stays in the live region, long enough to be read out. */
+const REFUSAL_MS = 2500;
 const buttons = {
   open: button('open-settings'),
   decrease: button('decrease'),
@@ -100,7 +108,20 @@ const LABELS: Readonly<Record<Step, string>> = {
   hub: `Shop scene, ${SCENARIO_TITLES.hub}. ${prompts.verb} to skip ahead. ${controlHint}`,
   comparison: `Comparison of today and with a central hub. ${prompts.verb} to replay this day, or use ${reshuffleHint} to reshuffle the day.`,
   'style-frame': `Style frame: the shop at a decisive moment, a still for judging the look. ${prompts.verb} for the title.`,
+  'round-1': `Round 1, today: you are the shop assistant and every order is mixed in store. ${prompts.playHint}`,
+  'round-1-result': `Round 1 result. ${prompts.verb} to play again with the central hub.`,
+  'round-2': `Round 2, with the hub: large orders can be sent to the hub. ${prompts.playHint}`,
+  'round-2-result': `Round 2 result. ${prompts.verb} to see a whole real day.`,
 };
+
+/** A round being played: its presses so far, and the round they give. */
+interface Playing {
+  n: RoundNumber;
+  round: Round;
+  commands: readonly Command[];
+  played: PlayedRound;
+  start: number;
+}
 
 if (screen) {
   const s = screen;
@@ -121,6 +142,12 @@ if (screen) {
   let heardTo = 0;
   let editor: Editor = openEditor(settings);
   let remembered = store !== null;
+  let playing: Playing | null = null;
+  const results = new Map<RoundNumber, RoundResult>();
+  /** What each play button shows, so the DOM is touched only when it changes. */
+  let shownButtons = '';
+  /** Until then the live region keeps saying why a press was refused, rather than the round's running line. */
+  let refusedUntil = 0;
 
   function beatsFor(c: Comparison): Record<ScenarioName, Beat[]> {
     return {today: narrationBeats('today', c.today.timeline, params), hub: narrationBeats('hub', c.hub.timeline, params)};
@@ -151,6 +178,7 @@ if (screen) {
     controlButton.textContent = controlOn ? 'AUTOPLAY' : 'TAKE CONTROL';
     controlButton.setAttribute('aria-pressed', String(controlOn));
     for (const b of Object.values(pickButtons)) b.hidden = !(replaying && deciding());
+    actions.hidden = playing === null;
     buttons.back.setAttribute('aria-disabled', String(blocker() !== null));
   };
 
@@ -163,6 +191,14 @@ if (screen) {
     }
     if (next.step === 'settings' && flow.step !== 'settings') editor = openEditor(settings);
     flow = next;
+    const n = roundOf(next.step);
+    playing = null;
+    if (n) {
+      const round = setupRound(roundScenario(n), next.seed, params, settings.roundSeconds);
+      playing = {n, round, commands: [], played: playRound(round, []), start: now};
+      results.delete(n);
+      shownButtons = '';
+    }
     const entering = replayOf(next.step);
     if (entering) {
       day = next.step === 'today' ? baseDay : {...day, [entering]: baseDay[entering]};
@@ -174,7 +210,8 @@ if (screen) {
     start = now - msFor(minute);
     heardTo = minute;
     canvas.setAttribute('aria-label', LABELS[flow.step]);
-    document.body.dataset.scene = replayOf(flow.step) ? 'shop' : flow.step === 'today-results' ? 'results' : flow.step;
+    const resultOf = roundResultOf(flow.step);
+    document.body.dataset.scene = replayOf(flow.step) ? 'shop' : flow.step === 'today-results' ? 'results' : n ? 'play' : resultOf ? 'round-result' : flow.step;
     document.body.dataset.step = flow.step;
     document.body.dataset.seed = String(flow.seed);
     syncControls();
@@ -183,6 +220,62 @@ if (screen) {
     if (flow.step === 'today-results') announce(resultsAnnouncement(day.today.metrics));
     if (flow.step === 'comparison') announce(comparisonAnnouncement(day, savings(day)));
     if (flow.step === 'style-frame') announce(styleFrame(moment, params).text);
+    if (resultOf) announce(roundAnnouncement(resultOf, resultFor(resultOf), LABELS[flow.step]));
+  };
+
+  /** A round's result; one reached without being played, by link, is the round with no presses. */
+  function resultFor(n: RoundNumber): RoundResult {
+    const known = results.get(n);
+    if (known) return known;
+    const result = playRound(setupRound(roundScenario(n), flow.seed, params, settings.roundSeconds), []).result;
+    results.set(n, result);
+    return result;
+  }
+
+  const roundMinute = (p: Playing, now: number): number => shopMinuteAt(now - p.start, ROUND_TIME_SCALE);
+
+  const syncPlayButtons = (p: Playing, minute: number): PlayButton[] => {
+    const shown = playButtons(optionsAt(p.round, p.commands, minute), mode, p.round.params.hubThresholdTins);
+    const key = JSON.stringify(shown);
+    if (key !== shownButtons) {
+      shownButtons = key;
+      for (const [action, el] of Object.entries(playButtonEls) as [PlayAction, HTMLButtonElement][]) {
+        const b = shown.find(x => x.action === action);
+        el.hidden = !b;
+        if (!b) continue;
+        const [label, note] = el.children;
+        if (label) label.textContent = b.label;
+        if (note) note.textContent = b.note;
+        el.setAttribute('aria-disabled', String(!b.enabled));
+      }
+    }
+    return shown;
+  };
+
+  /** A press goes through the simulation; one it refuses is said aloud, so a disabled button still answers. */
+  const pressPlay = (action: PlayAction, now: number): boolean => {
+    const p = playing;
+    if (!p) return false;
+    const minute = roundMinute(p, now);
+    const next = press(p.round, p.commands, action, minute);
+    if (next.reason !== null) {
+      const shown = syncPlayButtons(p, minute).find(b => b.action === action);
+      if (shown) {
+        announce(refusal(shown));
+        refusedUntil = now + REFUSAL_MS;
+      }
+      return shown !== undefined;
+    }
+    playing = {...p, commands: next.commands, played: playRound(p.round, next.commands)};
+    return true;
+  };
+
+  /** Ends the round when its time is up, keeping the result the presses gave. */
+  const tickRound = (now: number): void => {
+    const p = playing;
+    if (!p || roundMinute(p, now) < p.round.minutes) return;
+    results.set(p.n, p.played.result);
+    enter(advance(flow), now);
   };
 
   const pendingNow = (): Decision | null => (controlOn ? (run?.pending ?? null) : null);
@@ -248,6 +341,18 @@ if (screen) {
     else if (flow.step === 'today-results') drawResults(s.rect, todayRows(day.today.metrics), day.today.metrics.salesLostGbp === 0, prompts.results);
     else if (flow.step === 'comparison') drawComparison(s.rect, comparisonRows(day), savingsRows(day, savings(day)), prompts.comparison);
     else if (flow.step === 'style-frame') drawShop(s.rect, {...styleFrame(moment, params), sound: sfx.on});
+    else if (playing) {
+      const minute = Math.min(roundMinute(playing, now), playing.round.minutes);
+      const view = playView(playing.n, playing.round, playing.played.timeline, minute, ROUND_TIME_SCALE, sfx.on);
+      for (const name of effectsBetween(playing.played.timeline, heardTo, minute)) sfx.play(name);
+      heardTo = minute;
+      syncPlayButtons(playing, minute);
+      if (now >= refusedUntil) announce(view.text);
+      drawShop(s.rect, view);
+    } else if (roundResultOf(flow.step)) {
+      const n = roundResultOf(flow.step) ?? 1;
+      drawResults(s.rect, roundRows(n, resultFor(n)), false, n === 1 ? prompts.round1Result : prompts.round2Result, RESULT_TITLES[n]);
+    }
     else if (scenario) {
       const minute = replayMinute(now);
       const state = replayState(day[scenario].timeline, params.staff, params.shiftMinutes, minute);
@@ -328,6 +433,8 @@ if (screen) {
       toggleControl(now);
       return replayOf(flow.step) !== null;
     }
+    if (action === 'serve' || action === 'mix' || action === 'hub') return pressPlay(action, now);
+    if (playing) return action === 'advance';
     if (action === 'walk-in' || action === 'order') {
       if (!deciding()) return false;
       resolve(action, now);
@@ -376,6 +483,7 @@ if (screen) {
   });
 
   controlButton.addEventListener('click', () => act('control'));
+  for (const [action, el] of Object.entries(playButtonEls) as [PlayAction, HTMLButtonElement][]) el.addEventListener('click', () => act(action));
   pickButtons['walk-in'].addEventListener('click', () => act('walk-in'));
   pickButtons.order.addEventListener('click', () => act('order'));
   soundButton.addEventListener('click', () => act('sound'));
@@ -389,6 +497,7 @@ if (screen) {
   enter(flow, performance.now(), link.minute);
   const frame = (now: number): void => {
     tick(now);
+    tickRound(now);
     draw(now);
     requestAnimationFrame(frame);
   };

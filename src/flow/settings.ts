@@ -1,16 +1,19 @@
 import {DEFAULT_TIME_SCALE} from '../render/replay';
 import {DEFAULT_PARAMS, type Params, TIN_SIZES, type TinSize} from '../sim/params';
+import {DEFAULT_ROUND_SECONDS} from '../sim/round';
 
 /** Everything the menu edits: the simulation's parameters plus how fast the replay runs. */
 export interface Settings {
   params: Params;
   /** Shop minutes that pass per real second. */
   timeScale: number;
+  /** Real seconds each played round lasts. */
+  roundSeconds: number;
 }
 
-export const DEFAULT_SETTINGS: Settings = {params: DEFAULT_PARAMS, timeScale: DEFAULT_TIME_SCALE};
+export const DEFAULT_SETTINGS: Settings = {params: DEFAULT_PARAMS, timeScale: DEFAULT_TIME_SCALE, roundSeconds: DEFAULT_ROUND_SECONDS};
 
-export type Section = 'DAY' | 'PEOPLE' | 'MIXING' | 'TINS' | 'HUB' | 'SCALE';
+export type Section = 'DAY' | 'PEOPLE' | 'MIXING' | 'TINS' | 'HUB' | 'SCALE' | 'PLAY';
 
 export interface Field {
   id: string;
@@ -82,7 +85,7 @@ const sizeMixField = (size: TinSize): Field => ({
   write: (s, v) => withParams(s, {tinSizeMix: {...s.params.tinSizeMix, [size]: v}}),
 });
 
-/** In menu order. Every key of `Params` is reachable from here, and so is the replay speed. */
+/** In menu order. Every key of `Params` is reachable from here, and so are the replay speed and the round length. */
 export const FIELDS: readonly Field[] = [
   {
     id: 'shiftHours',
@@ -120,6 +123,17 @@ export const FIELDS: readonly Field[] = [
   paramField('hubDeliveryMinutes', {id: 'delivery', label: 'HUB DELIVERY', section: 'HUB', min: 15, max: 480, step: 15, format: unit('MIN')}),
   paramField('stores', {id: 'stores', label: 'STORES', section: 'SCALE', min: 5, max: 500, step: 5}),
   paramField('tradingDaysPerYear', {id: 'days', label: 'TRADING DAYS/YR', section: 'SCALE', min: 5, max: 365, step: 5}),
+  {
+    id: 'roundSeconds',
+    label: 'ROUND LENGTH',
+    section: 'PLAY',
+    min: 20,
+    max: 120,
+    step: 5,
+    format: unit('SEC'),
+    read: s => s.roundSeconds,
+    write: (s, v) => ({...s, roundSeconds: v}),
+  },
 ];
 
 export const clampTo = (field: Field, value: number): number => Math.min(field.max, Math.max(field.min, value));

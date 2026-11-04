@@ -8,6 +8,8 @@ import {PALETTE_TOKENS} from '../../src/render/palette';
 
 const BUILD = join(import.meta.dirname, '../../dist/paint-rush.html');
 const URL = pathToFileURL(BUILD).href;
+/** The autoplay pitch: SPACE on its title goes straight to the full-shift replay. */
+const PRESENTER = `${URL}?mode=presenter`;
 
 test.beforeAll(() => {
   if (!existsSync(BUILD)) throw new Error(`${BUILD} is missing; run \`bun run build\` first`);
@@ -34,7 +36,7 @@ async function coloursOutsidePalette(page: Page): Promise<string[]> {
 test('SPACE on the title starts the shop replay, narrated, in palette colours', async ({page}) => {
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
-  await page.goto(URL);
+  await page.goto(PRESENTER);
   await expect(page.locator('body')).toHaveAttribute('data-scene', 'title');
   await page.keyboard.press('Space');
   await expect(page.locator('body')).toHaveAttribute('data-scene', 'shop');
@@ -56,7 +58,7 @@ test('without a 2D canvas the results show as text', async ({page}) => {
   await page.addInitScript(() => {
     HTMLCanvasElement.prototype.getContext = () => null;
   });
-  await page.goto(URL);
+  await page.goto(PRESENTER);
   await expect(page.locator('body')).toHaveAttribute('data-scene', 'fallback');
   await expect(page.getByText('This demo needs a modern browser.')).toBeVisible();
   await expect(page.getByText(/^TODAY: \d+ of \d+ walk-ins served/)).toBeVisible();

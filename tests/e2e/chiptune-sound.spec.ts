@@ -6,6 +6,8 @@ import {expect, type Page, test} from '@playwright/test';
 
 const BUILD = join(import.meta.dirname, '../../dist/paint-rush.html');
 const URL = pathToFileURL(BUILD).href;
+/** The autoplay pitch: SPACE on its title goes straight to the full-shift replay. */
+const PRESENTER = `${URL}?mode=presenter`;
 
 test.beforeAll(() => {
   if (!existsSync(BUILD)) throw new Error(`${BUILD} is missing; run \`bun run build\` first`);
@@ -47,7 +49,7 @@ const audio = (page: Page): Promise<{contexts: number; notes: number; types: str
 
 test('sound is muted on load, and the sound button is finger-sized with a label that says the state', async ({page}) => {
   await spyOnAudio(page);
-  await page.goto(URL);
+  await page.goto(PRESENTER);
   const button = page.getByRole('button', {name: 'SOUND OFF'});
   const box = await button.boundingBox();
   expect(box?.width).toBeGreaterThanOrEqual(44);
@@ -59,7 +61,7 @@ test('sound is muted on load, and the sound button is finger-sized with a label 
 
 test('M and the button unmute, and the replay then plays synthesised square-wave effects', async ({page}) => {
   await spyOnAudio(page);
-  await page.goto(URL);
+  await page.goto(PRESENTER);
   await page.keyboard.press('KeyM');
   await expect(page.getByRole('button', {name: 'SOUND ON'})).toBeVisible();
   await expect(page.locator('#prompt')).toHaveText('Sound on.');
@@ -76,7 +78,7 @@ test('M and the button unmute, and the replay then plays synthesised square-wave
 
 test('a muted replay makes no sound', async ({page}) => {
   await spyOnAudio(page);
-  await page.goto(URL);
+  await page.goto(PRESENTER);
   await page.keyboard.press('Space');
   await page.waitForTimeout(3000);
   expect(await audio(page)).toMatchObject({contexts: 0, notes: 0});

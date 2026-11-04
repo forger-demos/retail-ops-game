@@ -6,6 +6,8 @@ import {expect, type Page, test} from '@playwright/test';
 
 const BUILD = join(import.meta.dirname, '../../dist/paint-rush.html');
 const URL = pathToFileURL(BUILD).href;
+/** The autoplay pitch: SPACE on its title goes straight to the full-shift replay. */
+const PRESENTER = `${URL}?mode=presenter`;
 
 test.beforeAll(() => {
   if (!existsSync(BUILD)) throw new Error(`${BUILD} is missing; run \`bun run build\` first`);
@@ -29,7 +31,7 @@ test.describe('with a keyboard', () => {
   test('S opens the menu from the title and BACK returns to it', async ({page}) => {
     const errors: string[] = [];
     page.on('pageerror', e => errors.push(e.message));
-    await page.goto(URL);
+    await page.goto(PRESENTER);
     await page.keyboard.press('KeyS');
     await expect(body(page)).toHaveAttribute('data-step', 'settings');
     await expect(live(page)).toHaveText('SHIFT LENGTH: 8 HRS.');
@@ -41,10 +43,10 @@ test.describe('with a keyboard', () => {
   });
 
   test('arrows move and change values, and the next run uses them', async ({page}) => {
-    await page.goto(URL);
+    await page.goto(PRESENTER);
     const baseline = await resultsAnnouncement(page);
 
-    await page.goto(URL);
+    await page.goto(PRESENTER);
     await page.keyboard.press('KeyS');
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('ArrowDown');
@@ -59,7 +61,7 @@ test.describe('with a keyboard', () => {
   });
 
   test('values survive a reload and RESET restores the defaults', async ({page}) => {
-    await page.goto(URL);
+    await page.goto(PRESENTER);
     await page.keyboard.press('KeyS');
     await page.keyboard.press('ArrowRight');
     await expect(live(page)).toHaveText('SHIFT LENGTH: 9 HRS.');
@@ -76,7 +78,7 @@ test.describe('with a keyboard', () => {
   });
 
   test('order sizes that do not total 100 block BACK until they do', async ({page}) => {
-    await page.goto(URL);
+    await page.goto(PRESENTER);
     await page.keyboard.press('KeyS');
     for (let i = 0; i < 9; i++) await page.keyboard.press('ArrowDown');
     await expect(live(page)).toHaveText('ORDERS OF 1 TIN: 55 %.');
@@ -94,7 +96,7 @@ test.describe('with a keyboard', () => {
   });
 
   test('R in the menu draws a new day that the pitch then uses', async ({page}) => {
-    await page.goto(URL);
+    await page.goto(PRESENTER);
     const seed = await body(page).getAttribute('data-seed');
     await page.keyboard.press('KeyS');
     await page.keyboard.press('KeyR');
@@ -104,7 +106,7 @@ test.describe('with a keyboard', () => {
   });
 
   test('the buttons are reachable by Tab and Enter on one does what it says, not BACK', async ({page}) => {
-    await page.goto(URL);
+    await page.goto(PRESENTER);
     await page.keyboard.press('KeyS');
     await page.keyboard.press('Tab');
     await expect(page.getByRole('button', {name: 'Decrease value'})).toBeFocused();
@@ -124,7 +126,7 @@ test.describe('with a keyboard', () => {
         },
       });
     });
-    await page.goto(URL);
+    await page.goto(PRESENTER);
     await page.keyboard.press('KeyS');
     await expect(live(page)).toHaveText('SHIFT LENGTH: 8 HRS. Not saved, browser storage is off.');
     await page.keyboard.press('ArrowRight');
@@ -140,7 +142,7 @@ test.describe('on a phone', () => {
   test.use({viewport: {width: 412, height: 839}, deviceScaleFactor: 2.625, isMobile: true, hasTouch: true});
 
   test('the title has a SETTINGS button, rows are tapped to select and -/+ change them', async ({page}) => {
-    await page.goto(URL);
+    await page.goto(PRESENTER);
     const open = page.getByRole('button', {name: 'SETTINGS'});
     await expect(open).toBeVisible();
     await open.tap();
