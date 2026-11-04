@@ -53,7 +53,8 @@ as enforced, not advisory.
   lands as a tested command with machine-readable output, not as prompt text.
   Pure logic is split from I/O, and side effects sit behind an injectable `CommandRunner`.
 - **Comments say why, never narrate a change.** History belongs in the commit.
-- **Original art and sound only.** The look is Game Boy era (four greens, pixel sprites, text boxes), but no sprite, tile, font, sound or name from any existing game. Draw it or synthesise it.
+- **Original art and sound only.** The look is 8-bit handheld era: a limited palette with real colour defined in `src/styles/tokens.css`, pixel sprites, text boxes, a drawn console frame. No sprite, tile, font, sound, name or likeness from any existing game. Draw it or synthesise it.
+- **Judge visual work against the brief.** The owner's brief is quoted verbatim in `docs/plan-paint-rush-v2.md`. A visual ticket's PR shows a capture of the change and says how it serves that brief: playful, readable at a glance, every action gets feedback.
 - **The simulation is pure.** `src/sim/` imports nothing from the DOM or the renderer; both scenarios share one seed (docs/adr/0001-same-seed-comparison.md).
 - **Archive, never delete, visual artefacts.** A superseded wireframe moves from `docs/design/<ticket>/` to `docs/progress/NN-<slug>/`; before `screenshot` overwrites `docs/screenshots/`, copy the current set into a new `docs/progress/NN-<slug>/`. Number in running order and add a line to `docs/progress/README.md`.
 - **The build must run offline.** `dist/paint-rush.html` opens from file:// with no network; no CDN or runtime fetch.

@@ -18,3 +18,10 @@
 - **Beat** - one line of narration in the text box, derived from the timeline.
 - **Comparison** - the last step of the pitch: both scenarios' lost walk-ins and sales side by side, and the sales saved.
 - **Sales saved** - today's sales lost minus the hub's, for one shift; scaled by trading days per year to a year, by a 52nd of that to a week, and by the number of stores to the estate. It excludes the hub's prep and delivery costs.
+- **Round** - one short played shift in play mode; round 1 mixes everything in store, round 2 sends large orders to the hub.
+- **Play mode** - the default experience: the audience is the shop assistant and chooses every action.
+- **Presenter mode** - the v1 autoplay flow, for narrating without playing.
+- **Debrief** - after the rounds: the full-shift simulation of today vs hub and the extrapolation.
+- **Style frame** - one finished frame of the real look, approved by the owner before the screens are built on it.
+- **Juice** - feedback for a player action: something moves, something sounds, something changes on screen.
+- **Customer type** - what a walk-in wants: colour advice, a sample pot, a small purchase, or a mix order.
