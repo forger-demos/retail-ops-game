@@ -13,8 +13,6 @@ export const NO_LOSS = 'NO SALES LOST TODAY';
 export const FOOTNOTE = 'EXCLUDES CENTRAL PREP AND DELIVERY COSTS.';
 export const RESULTS_TITLE = `${SCENARIO_TITLES.today}: RESULTS`;
 export const COMPARISON_TITLE = 'TODAY VS CENTRAL HUB';
-export const RESULTS_PROMPT = 'SPACE: SAME DAY WITH A CENTRAL HUB.';
-export const COMPARISON_PROMPT = 'SPACE: REPLAY THIS DAY. R: RESHUFFLE THE DAY.';
 
 export function todayRows(m: Metrics): Row[] {
   return [

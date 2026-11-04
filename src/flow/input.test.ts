@@ -1,0 +1,25 @@
+import {describe, expect, test} from 'bun:test';
+
+import {keyAction, TAP_GAP_MS, tapAccepted} from './input';
+
+describe('input actions', () => {
+  test('SPACE advances, R reshuffles, other keys do nothing', () => {
+    expect(keyAction('Space')).toBe('advance');
+    expect(keyAction('KeyR')).toBe('reshuffle');
+    expect(keyAction('Enter')).toBeNull();
+    expect(keyAction('KeyM')).toBeNull();
+  });
+
+  test('the first tap always counts', () => {
+    expect(tapAccepted(null, 0)).toBe(true);
+  });
+
+  test('a second tap inside the gap is a double tap and is ignored', () => {
+    expect(tapAccepted(1000, 1000 + TAP_GAP_MS - 1)).toBe(false);
+    expect(tapAccepted(1000, 1000 + 150)).toBe(false);
+  });
+
+  test('a tap after the gap counts again', () => {
+    expect(tapAccepted(1000, 1000 + TAP_GAP_MS)).toBe(true);
+  });
+});

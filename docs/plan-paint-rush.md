@@ -7,7 +7,7 @@ Give the executive team a short, memorable demonstration of what on-site paint m
 ## In scope
 
 - An 8-bit look in the style of the original Game Boy: four greens, pixel sprites, dialogue text boxes. All art and sound original.
-- Autoplay by default, narrated by the presenter; SPACE advances. An optional take-control mode.
+- Autoplay by default, narrated by the presenter; SPACE or a tap advances. An optional take-control mode.
 - A deterministic simulation (seeded) shared by both runs, so the only difference is where large orders are mixed ([ADR 0001](adr/0001-same-seed-comparison.md)).
 - Time compressed so one tin (5 shop minutes) takes 1 real second, adjustable ([ADR 0002](adr/0002-time-scale.md)).
 - Every parameter editable in a settings menu.

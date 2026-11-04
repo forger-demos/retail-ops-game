@@ -40,3 +40,48 @@ body {
   font: 1rem/1.5 monospace;
   color: var(--gb-3);
 }
+
+/* Taps drive the pitch, so the browser must not turn them into zooms or scrolls. */
+.stage {
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Fixed in the corner so the screen's whole-pixel scale never changes when a button appears. */
+.controls {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.controls button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 2px solid var(--gb-2);
+  border-radius: 0;
+  background: var(--gb-1);
+  color: var(--gb-3);
+  font: bold 14px/1 monospace;
+  letter-spacing: 1px;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+.controls button:active {
+  background: var(--gb-2);
+  color: var(--gb-0);
+}
+
+.controls button:focus-visible {
+  outline: 3px solid var(--gb-3);
+  outline-offset: 2px;
+}
+
+.controls button[hidden] {
+  display: none;
+}

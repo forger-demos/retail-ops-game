@@ -2,12 +2,15 @@ import {describe, expect, test} from 'bun:test';
 
 import {textWidth} from '../render/font';
 import {comparisonRows, FOOTNOTE, NO_LOSS, savingsRows, todayRows, type Row} from '../render/results';
+import {promptsFor} from '../render/prompts';
 import {SCREEN_HEIGHT, SCREEN_WIDTH} from '../render/screen-size';
 import {TEXTBOX} from '../render/textbox';
 import {compare} from '../sim/engine';
 import {savings} from '../sim/extrapolate';
 import {withParams} from '../sim/params';
 import {drawComparison, drawResults, rowLayout} from './results';
+
+const P = promptsFor('keyboard');
 
 type Call = [number, number, number, number, number];
 const record = (draw: (plot: (x: number, y: number, w: number, h: number, s: number) => void) => void): Call[] => {
@@ -46,14 +49,14 @@ describe('results screens', () => {
   for (const [name, params] of [['default', withParams()], ['busy', busy]] as const) {
     test(`today's results stay on screen and in the four shades (${name})`, () => {
       const m = compare(1, params).today.metrics;
-      inScreen(record(p => drawResults(p, todayRows(m), m.salesLostGbp === 0)));
+      inScreen(record(p => drawResults(p, todayRows(m), m.salesLostGbp === 0, P.results)));
       todayRows(m).forEach(noOverlap);
     });
 
     test(`the comparison stays on screen and no figure collides with its label (${name})`, () => {
       const c = compare(1, params);
       const s = savings(c);
-      inScreen(record(p => drawComparison(p, comparisonRows(c), savingsRows(c, s))));
+      inScreen(record(p => drawComparison(p, comparisonRows(c), savingsRows(c, s), P.comparison)));
       [...comparisonRows(c), ...savingsRows(c, s)].forEach(noOverlap);
     });
   }
@@ -70,7 +73,7 @@ describe('results screens', () => {
 
   test('the footnote is drawn above the text box on every comparison', () => {
     const c = compare(1, withParams({walkInsPerHour: 0}));
-    const calls = record(p => drawComparison(p, comparisonRows(c), savingsRows(c, savings(c))));
+    const calls = record(p => drawComparison(p, comparisonRows(c), savingsRows(c, savings(c)), P.comparison));
     const footnote = calls.filter(([, y, , , s]) => s === 1 && y >= TEXTBOX.y - 20 && y < TEXTBOX.y);
     expect(footnote.length).toBeGreaterThan(FOOTNOTE.replace(/ /g, '').length);
   });
@@ -80,6 +83,6 @@ describe('results screens', () => {
     expect(savingsRows(c, savings(c))).toEqual([{label: NO_LOSS, values: []}]);
     const m = c.today.metrics;
     expect(todayRows(m).map(r => r.values[0])).toEqual([String(m.tinsMixedInStore), '0', '0', 'GBP0']);
-    expect(record(p => drawResults(p, todayRows(m), true)).length).toBeGreaterThan(record(p => drawResults(p, todayRows(m), false)).length);
+    expect(record(p => drawResults(p, todayRows(m), true, P.results)).length).toBeGreaterThan(record(p => drawResults(p, todayRows(m), false, P.results)).length);
   });
 });

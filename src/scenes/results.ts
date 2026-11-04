@@ -1,5 +1,5 @@
 import {ADVANCE, drawText, textWidth, type Plot} from '../render/font';
-import {COMPARISON_HEADINGS, COMPARISON_PROMPT, COMPARISON_TITLE, FOOTNOTE, NO_LOSS, RESULTS_PROMPT, RESULTS_TITLE, type Row} from '../render/results';
+import {COMPARISON_HEADINGS, COMPARISON_TITLE, FOOTNOTE, NO_LOSS, RESULTS_TITLE, type Row} from '../render/results';
 import {SCREEN_HEIGHT, SCREEN_WIDTH} from '../render/screen-size';
 import {drawTextbox, TEXTBOX, wrap} from '../render/textbox';
 
@@ -28,14 +28,14 @@ function drawRow(plot: Plot, row: Row, y: number): void {
   row.values.forEach((v, i) => drawText(plot, v, at.values[i] ?? 0, y, 0));
 }
 
-export function drawResults(plot: Plot, rows: readonly Row[], noLoss: boolean): void {
+export function drawResults(plot: Plot, rows: readonly Row[], noLoss: boolean, prompt: string): void {
   header(plot, RESULTS_TITLE);
   rows.forEach((row, i) => drawRow(plot, row, HEADER_H + 8 + i * LINE_H * 1.5));
   if (noLoss) drawText(plot, NO_LOSS, Math.floor((SCREEN_WIDTH - textWidth(NO_LOSS)) / 2), TEXTBOX.y - 14, 1);
-  drawTextbox(plot, RESULTS_PROMPT);
+  drawTextbox(plot, prompt);
 }
 
-export function drawComparison(plot: Plot, table: readonly Row[], saved: readonly Row[]): void {
+export function drawComparison(plot: Plot, table: readonly Row[], saved: readonly Row[], prompt: string): void {
   header(plot, COMPARISON_TITLE);
   let y = HEADER_H + 3;
   drawRow(plot, {label: '', values: [...COMPARISON_HEADINGS]}, y);
@@ -47,5 +47,5 @@ export function drawComparison(plot: Plot, table: readonly Row[], saved: readonl
     y += LINE_H;
   }
   wrap(FOOTNOTE, FOOTNOTE_CHARS).forEach((line, i) => drawText(plot, line, MARGIN, TEXTBOX.y - 20 + i * 9, 1));
-  drawTextbox(plot, COMPARISON_PROMPT);
+  drawTextbox(plot, prompt);
 }
