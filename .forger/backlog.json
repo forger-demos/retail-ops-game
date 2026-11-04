@@ -1,0 +1,148 @@
+{
+  "product": {
+    "name": "PAINT RUSH - executive demo of on-site paint mixing cost",
+    "description": "An 8-bit, Game Boy-style browser demo showing that while staff mix tins to order, the shop floor is empty and walk-ins leave without buying; then the same day replayed with large orders sent to a central hub.",
+    "note": "The backlog when tracker.kind is local or none. Plan: docs/plan-paint-rush.md. Vocabulary: GLOSSARY.md."
+  },
+  "features": {
+    "scaffold": {
+      "priority": "P0",
+      "status": "not_started",
+      "type": "feature",
+      "depends_on": [],
+      "effort": "medium",
+      "issue": null,
+      "title": "Project scaffold with a Game Boy canvas and an offline single-file build",
+      "description": "Set up the project so every later ticket has gates, a screen and a build. Vite + TypeScript, run with Bun. A 160x144 canvas scaled by whole-pixel factors and centred (letterboxed), drawn only in the four Game Boy greens defined once in src/styles/tokens.css. A placeholder title screen reading PAINT RUSH and PRESS SPACE. `bun run build` emits one self-contained HTML file (all JS, CSS and assets inlined) that runs from file:// with no network, for presenting from a laptop.",
+      "acceptance_criteria": [
+        "package.json has dev, build, test, typecheck, lint and check scripts; `bun run check` runs typecheck, lint and tests and passes",
+        "src/styles/tokens.css defines the four palette colours; no other file under src/ holds a raw colour literal (check ui passes)",
+        "The canvas keeps a 160x144 logical resolution, scales by an integer factor, uses nearest-neighbour rendering, and stays fully visible at phone and desktop viewports",
+        "`bun run build` produces dist/paint-rush.html; opening it via file:// with networking disabled shows the title screen (a Playwright test asserts this)",
+        ".forger/ui.json paths, tokens, start and url match the real project, and `screenshot` writes docs/screenshots/index-*.png",
+        "Playwright and axe-core are dev dependencies; `check a11y` passes on the title screen",
+        "README.md says what the demo is and how to run, build and present it"
+      ],
+      "files": ["package.json", "vite.config.ts", "tsconfig.json", "index.html", "src/main.ts", "src/render/screen.ts", "src/styles/tokens.css", ".forger/ui.json", "README.md"],
+      "reuse": ["vite-plugin-singlefile (or equivalent) for the inlined build", "docs/design/two-run-results wireframe for the title screen content"]
+    },
+    "sim-engine": {
+      "priority": "P0",
+      "status": "not_started",
+      "type": "feature",
+      "depends_on": ["scaffold"],
+      "effort": "medium",
+      "issue": null,
+      "title": "Deterministic shop simulation for the today and hub scenarios",
+      "description": "The model behind the demo, pure and tested, with no rendering. An event-driven simulation in shop minutes over one shift, driven by a seeded RNG and a parameter object (defaults in GLOSSARY.md and docs/plan-paint-rush.md). Walk-ins arrive at a Poisson rate; a free staff member serves them for the service time and they spend the average sale; otherwise they wait and leave as a lost sale at the patience limit. Mix orders arrive at their own rate with a tin count from the order-size mix and tin sizes priced per size; a free staff member takes the order and is off the floor for minutes-per-tin x tins. Scenario `today` mixes everything in store; scenario `hub` sends large orders (over the hub threshold) to the central hub, which records a 2h delivery and never occupies staff. Both scenarios share one seed so arrivals are identical (ADR 0001). Output: per-scenario metrics and an ordered event timeline the renderer can replay.",
+      "acceptance_criteria": [
+        "Same seed and parameters give an identical timeline and metrics; different seeds differ",
+        "The today and hub runs for one seed have identical walk-in and mix-order arrival times and tin counts",
+        "In hub, no order above the hub threshold is mixed in store; each appears as a hub dispatch with a delivery time 120 shop minutes later",
+        "A walk-in who waits past the patience limit is recorded as a lost sale worth the average sale; one served in time is not",
+        "With one staff member mixing, a walk-in arriving during the mix finds nobody free (floor empty)",
+        "Metrics include tins mixed in store, orders sent to hub, walk-ins served, walk-ins lost, sales lost GBP and staff minutes off the floor",
+        "`bun run sim --json [--seed n]` prints both scenarios' metrics as JSON; a test runs it",
+        "Engine code imports nothing from the DOM or the renderer"
+      ],
+      "files": ["src/sim/params.ts", "src/sim/rng.ts", "src/sim/engine.ts", "src/sim/metrics.ts", "src/sim/engine.test.ts", "scripts/sim.ts"],
+      "reuse": ["GLOSSARY.md terms for type and field names", "docs/adr/0001-same-seed-comparison.md"]
+    },
+    "shop-scene": {
+      "priority": "P0",
+      "status": "needs_human",
+      "type": "feature",
+      "depends_on": ["scaffold", "sim-engine"],
+      "effort": "large",
+      "issue": null,
+      "title": "Animated shop scene that replays one scenario",
+      "description": "Waits for the owner to approve the wireframe at docs/design/shop-scene/ (set status to not_started to release). Replays one scenario's timeline on the Game Boy canvas at the time scale (default 1 real second = 5 shop minutes, ADR 0002) with original pixel art only: a top-down shop floor with door, aisles and counter; a mixing room behind a wall; staff walking between them; walk-ins queueing with a wait meter, an '!' bubble and walking out with a '-GBP95' pop; a tin progress bar ('TIN 3/8'); a status bar with scenario name, shop clock, served and lost counters and GBP lost; a Pokemon-style text box with narration beats. In hub, a van leaves the loading bay with '2H DELIVERY' for each large order.",
+      "acceptance_criteria": [
+        "The rendered counters at the end of a replay equal the sim-engine metrics for the same seed",
+        "Replay length equals shift length / time scale (8h at 1 s = 5 min plays in 96 s), within one frame",
+        "The floor is drawn empty whenever the timeline says no staff member is on it",
+        "All sprites and tiles are original and drawn in the four token colours; no third-party game assets",
+        "The UI states in the wireframe (opening, overflow queue, no-canvas fallback) are implemented",
+        "docs/screenshots/ is updated by `screenshot`, and docs/design/shop-scene/ is moved into docs/progress/ per the archive rule"
+      ],
+      "files": ["src/render/scene.ts", "src/render/sprites.ts", "src/render/textbox.ts", "src/render/replay.ts"],
+      "reuse": ["docs/design/shop-scene/index.html", "src/render/screen.ts from scaffold", "the sim-engine timeline"]
+    },
+    "two-run-results": {
+      "priority": "P0",
+      "status": "needs_human",
+      "type": "feature",
+      "depends_on": ["shop-scene"],
+      "effort": "medium",
+      "issue": null,
+      "title": "Presentation flow: today, results, with hub, comparison",
+      "description": "Waits for the owner to approve the wireframe at docs/design/two-run-results/. The full pitch on SPACE: title -> today replay -> today results -> hub replay (same seed) -> comparison. Comparison shows today vs hub for walk-ins lost and sales lost, then sales saved per day, per week, per year and across N stores, with the footnote 'Excludes central prep and delivery costs.' R reshuffles the day (new seed) and replays. Results are mirrored into a visually hidden live region.",
+      "acceptance_criteria": [
+        "SPACE advances through every step in order; at the comparison it replays the same day, R starts a new seed",
+        "Comparison figures equal the sim-engine metrics; week, year and store extrapolations use the parameters for trading days and stores",
+        "The excludes-costs footnote is always shown on the comparison",
+        "Large GBP values are shortened to fit the text box (e.g. GBP1.2M) and a zero-loss day reads 'No sales lost today'",
+        "The live region contains the comparison as text, and `check a11y` passes on every step",
+        "docs/screenshots/ is updated and docs/design/two-run-results/ is moved into docs/progress/ per the archive rule"
+      ],
+      "files": ["src/flow/flow.ts", "src/render/results.ts", "src/render/title.ts", "src/sim/extrapolate.ts"],
+      "reuse": ["docs/design/two-run-results/index.html", "the shop-scene replay", "src/render/textbox.ts"]
+    },
+    "settings": {
+      "priority": "P1",
+      "status": "needs_human",
+      "type": "feature",
+      "depends_on": ["two-run-results"],
+      "effort": "medium",
+      "issue": null,
+      "title": "Settings menu to edit every demo parameter",
+      "description": "Waits for the owner to approve the wireframe at docs/design/settings/. A Game Boy-style menu opened with S from the title, keyboard only: shift hours, time scale, staff on floor (1-4), walk-ins per hour, mix orders per hour, service time, patience, average sale, minutes per tin, order-size mix, tin prices per size, hub threshold, stores, trading days per year. Reshuffle and reset-to-defaults actions. Values persist in browser storage and feed the next run.",
+      "acceptance_criteria": [
+        "Every parameter in src/sim/params.ts is editable from the menu and the next run uses the edited value",
+        "Order-size percentages that do not total 100 show 'MUST TOTAL 100' and block BACK",
+        "Values survive a reload; with storage unavailable they still apply for the session and a note says so",
+        "Reset restores the documented defaults",
+        "The menu is fully keyboard operable and `check a11y` passes",
+        "docs/screenshots/ is updated and docs/design/settings/ is moved into docs/progress/ per the archive rule"
+      ],
+      "files": ["src/render/settings.ts", "src/flow/settings-store.ts"],
+      "reuse": ["docs/design/settings/index.html", "src/render/textbox.ts", "src/sim/params.ts defaults"]
+    },
+    "take-control": {
+      "priority": "P2",
+      "status": "not_started",
+      "type": "feature",
+      "depends_on": ["shop-scene"],
+      "effort": "medium",
+      "issue": null,
+      "title": "Take-control mode for the presenter",
+      "description": "An optional mode, toggled with C during a replay, where the presenter decides what a free staff member does next when a walk-in and a mix order are both waiting. Autoplay stays the default. The simulation must expose a decision hook so the same engine serves both modes deterministically.",
+      "acceptance_criteria": [
+        "With no input the mode behaves exactly like autoplay",
+        "A choice changes the outcome and the metrics reflect it",
+        "The engine accepts a decision policy; autoplay is the default policy and is covered by the existing tests",
+        "The on-screen prompt says which keys choose what"
+      ],
+      "files": ["src/sim/engine.ts", "src/flow/flow.ts"],
+      "reuse": ["sim-engine", "shop-scene text box for the prompt"]
+    },
+    "chiptune-sound": {
+      "priority": "P2",
+      "status": "not_started",
+      "type": "feature",
+      "depends_on": ["shop-scene"],
+      "effort": "small",
+      "issue": null,
+      "title": "Chiptune sound effects, muted by default",
+      "description": "Original square-wave effects generated with the Web Audio API for walk-in, walkout, tin done and van leaving. Muted on load; M toggles and the status bar shows the state. No audio files.",
+      "acceptance_criteria": [
+        "No sound plays until M is pressed",
+        "Each named event triggers its effect when unmuted",
+        "No audio file is added; effects are synthesised",
+        "The built single file still runs offline"
+      ],
+      "files": ["src/audio/sfx.ts"],
+      "reuse": ["the shop-scene replay events"]
+    }
+  }
+}

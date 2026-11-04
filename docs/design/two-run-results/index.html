@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Two-run flow and results wireframe</title>
+  <link rel="stylesheet" href="../wireframe.css">
+</head>
+<body>
+  <main class="wf-screen">
+    <h1>Flow: title, today, results, fix, comparison</h1>
+    <p class="wf-note">SPACE advances every step. All screens share the 160x144 frame.</p>
+    <div class="wf-row">
+      <div class="wf-col">
+        <div class="wf-box"><h2>1. Title</h2><p>"PAINT RUSH" logo, a tin sprite, "PRESS SPACE". Small hint: "S - settings, M - sound".</p></div>
+        <div class="wf-box"><h2>2. Run: TODAY</h2><p>The shop scene, all mixing done in store.</p></div>
+        <div class="wf-box"><h2>3. Results: TODAY</h2><p>Text box list: tins mixed, customers served, customers lost, sales lost GBP.</p></div>
+      </div>
+      <div class="wf-col">
+        <div class="wf-box"><h2>4. Run: WITH CENTRAL HUB</h2><p>Same seed, same customers and orders. Orders over 5 tins go to the van.</p></div>
+        <div class="wf-box"><h2>5. Comparison</h2><p>Two columns, TODAY vs HUB: customers lost, sales lost. Then "SAVED PER DAY", per week, per year, across N stores. Footnote: "Excludes central prep and delivery costs."</p></div>
+        <span class="wf-button">SPACE - replay / R - reshuffle day</span>
+      </div>
+    </div>
+    <div class="wf-state"><h3>Empty</h3><p>A day with no lost customers still shows the table, with zeros and "No sales lost today".</p></div>
+    <div class="wf-state"><h3>Loading</h3><p>None.</p></div>
+    <div class="wf-state"><h3>Failed</h3><p>None - results are computed, not fetched.</p></div>
+    <div class="wf-state"><h3>Full</h3><p>Large GBP values are shortened ("GBP1.2M") to fit the 20-column text box.</p></div>
+    <p class="wf-note">The results are also written to a visually hidden live region, so a screen reader and the a11y check can read them.</p>
+  </main>
+</body>
+</html>
