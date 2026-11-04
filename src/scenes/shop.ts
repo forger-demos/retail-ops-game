@@ -4,7 +4,7 @@ import {C, type Shade} from '../render/palette';
 import {clockText, type ReplayState, staffOnFloor, type StaffView} from '../render/replay';
 import {SCREEN_WIDTH} from '../render/screen-size';
 import {drawSprite, type Sprite} from '../render/sprite';
-import {BANG, CRATE, customerSprite, PERSON_H, PERSON_W, PLANT, SHAKER, STAFF, TILL, TINTER, VAN} from '../render/sprites';
+import {BANG, BUBBLE_H, CRATE, customerSprite, PERSON_H, PERSON_W, PLANT, SHAKER, STAFF, TILL, TINTER, VAN, walkInSprite, WALK_IN_BUBBLES} from '../render/sprites';
 import {drawTextbox} from '../render/textbox';
 import type {Params, ScenarioName} from '../sim/params';
 
@@ -270,11 +270,12 @@ function patienceBar(plot: Plot, p: Point, waited: number, patience: number): vo
 
 function drawCustomers(plot: Plot, view: ShopView): void {
   const {state, params} = view;
-  for (const s of state.serving) if (s.staff < STATIONS) person(plot, customerSprite(s.walkIn), servedSpot(s.staff));
+  for (const s of state.serving) if (s.staff < STATIONS) person(plot, walkInSprite(s.kind, s.walkIn), servedSpot(s.staff));
 
   const overflow = state.waiting.length - QUEUE_SLOTS;
   if (overflow > 0) {
-    person(plot, customerSprite(state.waiting[QUEUE_SLOTS]?.walkIn ?? 0), DOOR_SPOT);
+    const next = state.waiting[QUEUE_SLOTS];
+    if (next) person(plot, walkInSprite(next.kind, next.walkIn), DOOR_SPOT);
     drawText(plot, `+${overflow}`, DOOR_SPOT.x + PERSON_W + 1, DOOR_SPOT.y + 1, C.ink);
   }
   state.waiting
@@ -282,7 +283,8 @@ function drawCustomers(plot: Plot, view: ShopView): void {
     .map((w, i) => ({w, p: queueSlot(i)}))
     .reverse()
     .forEach(({w, p}) => {
-      person(plot, customerSprite(w.walkIn), p);
+      person(plot, walkInSprite(w.kind, w.walkIn), p);
+      drawSprite(plot, WALK_IN_BUBBLES[w.kind], p.x + 1, p.y - 5 - BUBBLE_H);
       patienceBar(plot, p, state.minute - w.since, params.patienceMinutes);
     });
 
@@ -291,7 +293,7 @@ function drawCustomers(plot: Plot, view: ShopView): void {
     const t = (state.minute - loss.at) / LOSS_MINUTES;
     if (t < 0 || t >= 1) continue;
     const p = lerp({x: queueSlot(0).x, y: WALK_OUT_Y}, {x: -PERSON_W, y: WALK_OUT_Y}, t);
-    person(floor, customerSprite(loss.walkIn), p);
+    person(floor, walkInSprite(loss.kind, loss.walkIn), p);
     drawSprite(floor, BANG, p.x + 3, p.y - 10);
     const pop = `-GBP${loss.saleGbp}`;
     drawText(floor, pop, Math.max(2, p.x - 4), WALK_OUT_Y - 18 - Math.round(t * 3), C.red);

@@ -1,6 +1,16 @@
 export const TIN_SIZES = ['750ml', '2.5L', '5L'] as const;
 export type TinSize = (typeof TIN_SIZES)[number];
 
+export const WALK_IN_KINDS = ['advice', 'sample', 'small'] as const;
+export type WalkInKind = (typeof WALK_IN_KINDS)[number];
+
+/** One kind of walk-in: drawn with weight `share` (a fraction), and worth `valueGbp` if served. */
+export interface WalkInType {
+  kind: WalkInKind;
+  share: number;
+  valueGbp: number;
+}
+
 export type ScenarioName = 'today' | 'hub';
 
 /** One band of the order-size mix: orders of `minTins`..`maxTins` tins, drawn with weight `share`. */
@@ -16,7 +26,8 @@ export interface Params {
   staff: number;
   walkInsPerHour: number;
   serviceMinutes: number;
-  averageSaleGbp: number;
+  /** Who walks in. Shares total 1; the mean value is the average walk-in sale. */
+  walkInTypes: readonly WalkInType[];
   patienceMinutes: number;
   mixOrdersPerHour: number;
   minutesPerTin: number;
@@ -37,7 +48,11 @@ export const DEFAULT_PARAMS: Params = {
   staff: 1,
   walkInsPerHour: 10,
   serviceMinutes: 4,
-  averageSaleGbp: 95,
+  walkInTypes: [
+    {kind: 'advice', share: 0.25, valueGbp: 230},
+    {kind: 'sample', share: 0.15, valueGbp: 30},
+    {kind: 'small', share: 0.6, valueGbp: 55},
+  ],
   patienceMinutes: 10,
   mixOrdersPerHour: 3,
   minutesPerTin: 5,
@@ -57,4 +72,15 @@ export const DEFAULT_PARAMS: Params = {
 
 export function withParams(overrides: Partial<Params> = {}): Params {
   return {...DEFAULT_PARAMS, ...overrides};
+}
+
+/** Expected value of one walk-in: each type's value weighted by its share. */
+export function averageWalkInGbp(params: Params): number {
+  return params.walkInTypes.reduce((sum, t) => sum + t.share * t.valueGbp, 0);
+}
+
+export function walkInType(params: Params, kind: WalkInKind): WalkInType {
+  const found = params.walkInTypes.find(t => t.kind === kind);
+  if (!found) throw new Error(`no walk-in type ${kind}`);
+  return found;
 }

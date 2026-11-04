@@ -1,5 +1,5 @@
 import {DEFAULT_TIME_SCALE} from '../render/replay';
-import {DEFAULT_PARAMS, type Params, TIN_SIZES, type TinSize} from '../sim/params';
+import {DEFAULT_PARAMS, type Params, TIN_SIZES, type TinSize, WALK_IN_KINDS, type WalkInKind} from '../sim/params';
 import {DEFAULT_ROUND_SECONDS} from '../sim/round';
 
 /** Everything the menu edits: the simulation's parameters plus how fast the replay runs. */
@@ -13,7 +13,7 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {params: DEFAULT_PARAMS, timeScale: DEFAULT_TIME_SCALE, roundSeconds: DEFAULT_ROUND_SECONDS};
 
-export type Section = 'DAY' | 'PEOPLE' | 'MIXING' | 'TINS' | 'HUB' | 'SCALE' | 'PLAY';
+export type Section = 'DAY' | 'PEOPLE' | 'WALK-INS' | 'MIXING' | 'TINS' | 'HUB' | 'SCALE' | 'PLAY';
 
 export interface Field {
   id: string;
@@ -58,6 +58,37 @@ const bandField = (index: number): Field => {
     write: (s, v) => withParams(s, {orderSizeMix: s.params.orderSizeMix.map((b, i) => (i === index ? {...b, share: v / 100} : b))}),
   };
 };
+
+const KIND_LABELS: Record<WalkInKind, string> = {advice: 'ADVICE', sample: 'SAMPLE', small: 'SMALL'};
+
+const withType = (s: Settings, kind: WalkInKind, patch: {share?: number; valueGbp?: number}): Settings =>
+  withParams(s, {walkInTypes: s.params.walkInTypes.map(t => (t.kind === kind ? {...t, ...patch} : t))});
+
+const typeOf = (s: Settings, kind: WalkInKind) => s.params.walkInTypes.find(t => t.kind === kind);
+
+const typeShareField = (kind: WalkInKind): Field => ({
+  id: `type-share-${kind}`,
+  label: `${KIND_LABELS[kind]} SHARE`,
+  section: 'WALK-INS',
+  min: 0,
+  max: 100,
+  step: 5,
+  format: unit('%'),
+  read: s => Math.round((typeOf(s, kind)?.share ?? 0) * 100),
+  write: (s, v) => withType(s, kind, {share: v / 100}),
+});
+
+const typeValueField = (kind: WalkInKind): Field => ({
+  id: `type-value-${kind}`,
+  label: `${KIND_LABELS[kind]} VALUE`,
+  section: 'WALK-INS',
+  min: 5,
+  max: 500,
+  step: 5,
+  format: unit('GBP'),
+  read: s => typeOf(s, kind)?.valueGbp ?? 0,
+  write: (s, v) => withType(s, kind, {valueGbp: v}),
+});
 
 const sizeLabel = (size: TinSize): string => size.toUpperCase();
 
@@ -114,9 +145,9 @@ export const FIELDS: readonly Field[] = [
   paramField('mixOrdersPerHour', {id: 'mixOrders', label: 'MIX ORDERS PER HR', section: 'DAY', min: 1, max: 20, step: 1}),
   paramField('serviceMinutes', {id: 'service', label: 'SERVICE TIME', section: 'PEOPLE', min: 1, max: 30, step: 1, format: unit('MIN')}),
   paramField('patienceMinutes', {id: 'patience', label: 'PATIENCE', section: 'PEOPLE', min: 1, max: 60, step: 1, format: unit('MIN')}),
-  paramField('averageSaleGbp', {id: 'sale', label: 'AVERAGE SALE', section: 'PEOPLE', min: 5, max: 500, step: 5, format: unit('GBP')}),
   paramField('minutesPerTin', {id: 'perTin', label: 'MINUTES PER TIN', section: 'MIXING', min: 1, max: 30, step: 1, format: unit('MIN')}),
   ...DEFAULT_PARAMS.orderSizeMix.map((_, i) => bandField(i)),
+  ...WALK_IN_KINDS.flatMap(k => [typeShareField(k), typeValueField(k)]),
   ...TIN_SIZES.map(priceField),
   ...TIN_SIZES.map(sizeMixField),
   paramField('hubThresholdTins', {id: 'threshold', label: 'HUB IF OVER', section: 'HUB', min: 1, max: 12, step: 1, format: unit('TINS')}),
@@ -148,9 +179,16 @@ export function mixTotal(s: Settings): number {
   return s.params.orderSizeMix.reduce((sum, b) => sum + Math.round(b.share * 100), 0);
 }
 
+export const TYPE_ERROR = 'TYPES MUST TOTAL 100';
+
+export function typeTotal(s: Settings): number {
+  return s.params.walkInTypes.reduce((sum, t) => sum + Math.round(t.share * 100), 0);
+}
+
 /** The reason the settings cannot be left, or null when they are fine. */
 export function problem(s: Settings): string | null {
-  return mixTotal(s) === 100 ? null : MIX_ERROR;
+  if (mixTotal(s) !== 100) return MIX_ERROR;
+  return typeTotal(s) === 100 ? null : TYPE_ERROR;
 }
 
 /** Rows of the list that fit on screen at once. */

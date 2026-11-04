@@ -1,7 +1,7 @@
 # Glossary
 
 - **Walk-in** - a customer on the shop floor who wants to buy and needs a staff member to serve them.
-- **Lost sale** - a walk-in who waits past their patience and leaves without buying; valued at the average sale.
+- **Lost sale** - a walk-in who waits past their patience and leaves without buying; valued at its customer type's value.
 - **Patience** - how long a walk-in waits for a free staff member before leaving.
 - **Service time** - how long serving one walk-in occupies a staff member.
 - **Staff on the floor** - staff available to serve; a staff member mixing is off the floor.
@@ -27,4 +27,4 @@
 - **Round comparison** - the two rounds side by side, as played, and which made more in sales.
 - **Style frame** - one finished frame of the real look, approved by the owner before the screens are built on it.
 - **Juice** - feedback for a player action: something moves, something sounds, something changes on screen.
-- **Customer type** - what a walk-in wants: colour advice, a sample pot, a small purchase, or a mix order.
+- **Customer type** - what a walk-in wants: colour advice, a sample pot or a small purchase (a mix order is its own thing). Each has a share of walk-ins, a value if served, a look and a bubble. Shares total 100 and the values, weighted by share, average to the average sale.

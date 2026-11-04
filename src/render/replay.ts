@@ -1,3 +1,4 @@
+import type {WalkInKind} from '../sim/params';
 import type {TimelineEvent} from '../sim/timeline';
 
 /** Shop minutes that pass per real second; 5 is one tin a second (ADR 0002). */
@@ -38,16 +39,19 @@ export interface StaffView {
 
 export interface WaitingView {
   walkIn: number;
+  kind: WalkInKind;
   since: number;
 }
 
 export interface ServingView {
   walkIn: number;
+  kind: WalkInKind;
   staff: number;
 }
 
 export interface LossView {
   walkIn: number;
+  kind: WalkInKind;
   at: number;
   saleGbp: number;
 }
@@ -94,11 +98,11 @@ export function replayState(timeline: readonly TimelineEvent[], staffCount: numb
     if (!finished && e.at > minute) break;
     switch (e.type) {
       case 'walk-in-arrive':
-        waiting.set(e.walkIn, {walkIn: e.walkIn, since: e.at});
+        waiting.set(e.walkIn, {walkIn: e.walkIn, kind: e.kind, since: e.at});
         break;
       case 'walk-in-served': {
         waiting.delete(e.walkIn);
-        serving.set(e.staff, {walkIn: e.walkIn, staff: e.staff});
+        serving.set(e.staff, {walkIn: e.walkIn, kind: e.kind, staff: e.staff});
         served++;
         const s = staff[e.staff];
         if (s) {
@@ -109,7 +113,7 @@ export function replayState(timeline: readonly TimelineEvent[], staffCount: numb
       }
       case 'walk-in-lost':
         waiting.delete(e.walkIn);
-        losses.push({walkIn: e.walkIn, at: e.at, saleGbp: e.saleGbp});
+        losses.push({walkIn: e.walkIn, kind: e.kind, at: e.at, saleGbp: e.saleGbp});
         lost++;
         lostGbp += e.saleGbp;
         break;

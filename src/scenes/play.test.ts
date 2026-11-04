@@ -68,7 +68,7 @@ describe('round results', () => {
   test('round 2 adds what was sent to the hub; every row draws in the font', () => {
     const {result} = playRound(hub, press(hub, [], 'hub', 0).commands);
     const rows = roundRows(2, result);
-    expect(rows.map(r => r.label)).toEqual(['SALES MADE', 'WALKED OUT', 'TIME UNMANNED', 'SENT TO HUB', ...(result.ordersLeft > 0 ? ['ORDERS NOT MIXED'] : [])]);
+    expect(rows.map(r => r.label)).toEqual(['SALES MADE', 'WALKED OUT', 'TIME UNMANNED', 'SENT TO HUB', ...(result.ordersLeft > 0 ? ['ORDERS NOT MIXED'] : []), 'LOST ADVICE', 'LOST SAMPLES', 'LOST SMALL']);
     expect(rows[3]?.values).toEqual([`${OPENING_ORDER_TINS} TINS`]);
     for (const r of rows) for (const t of [r.label, ...r.values]) drawText(() => undefined, t, 0, 0, 0);
     expect(roundAnnouncement(2, result, 'Next.')).toContain(`${OPENING_ORDER_TINS} tins sent to the hub.`);
@@ -76,6 +76,6 @@ describe('round results', () => {
 
   test('round 1 has no hub row, and says when an order was never mixed', () => {
     const {result} = playRound(today, []);
-    expect(roundRows(1, result).map(r => r.label)).toEqual(['SALES MADE', 'WALKED OUT', 'TIME UNMANNED', 'ORDERS NOT MIXED']);
+    expect(roundRows(1, result).map(r => r.label)).toEqual(['SALES MADE', 'WALKED OUT', 'TIME UNMANNED', 'ORDERS NOT MIXED', 'LOST ADVICE', 'LOST SAMPLES', 'LOST SMALL']);
   });
 });

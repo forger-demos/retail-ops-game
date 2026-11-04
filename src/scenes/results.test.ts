@@ -3,13 +3,14 @@ import {describe, expect, test} from 'bun:test';
 import {isShade} from '../render/palette';
 
 import {textWidth} from '../render/font';
-import {comparisonRows, FOOTNOTE, NO_LOSS, savingsRows, todayRows, type Row} from '../render/results';
+import {formatGbp} from '../render/money';
+import {comparisonRows, FOOTNOTE, lostByTypeRows, NO_LOSS, resultsAnnouncement, savingsRows, todayRows, type Row} from '../render/results';
 import {promptsFor} from '../render/prompts';
 import {SCREEN_HEIGHT, SCREEN_WIDTH} from '../render/screen-size';
 import {TEXTBOX} from '../render/textbox';
 import {compare} from '../sim/engine';
 import {savings} from '../sim/extrapolate';
-import {withParams} from '../sim/params';
+import {DEFAULT_PARAMS, WALK_IN_KINDS, withParams} from '../sim/params';
 import {drawComparison, drawResults, rowLayout} from './results';
 
 const P = promptsFor('keyboard');
@@ -45,7 +46,7 @@ const noOverlap = (row: Row): void => {
 };
 
 /** A day whose figures all need shortening, across a large estate. */
-const busy = withParams({walkInsPerHour: 60, averageSaleGbp: 9000, stores: 999, tradingDaysPerYear: 365});
+const busy = withParams({walkInsPerHour: 60, walkInTypes: DEFAULT_PARAMS.walkInTypes.map(t => ({...t, valueGbp: 9000})), stores: 999, tradingDaysPerYear: 365});
 
 describe('results screens', () => {
   for (const [name, params] of [['default', withParams()], ['busy', busy]] as const) {
@@ -84,7 +85,26 @@ describe('results screens', () => {
     const c = compare(1, withParams({walkInsPerHour: 0}));
     expect(savingsRows(c, savings(c))).toEqual([{label: NO_LOSS, values: []}]);
     const m = c.today.metrics;
-    expect(todayRows(m).map(r => r.values[0])).toEqual([String(m.tinsMixedInStore), '0', '0', 'GBP0']);
+    expect(todayRows(m).map(r => r.values[0])).toEqual([String(m.tinsMixedInStore), '0', '0', 'GBP0', '0 GBP0', '0 GBP0', '0 GBP0']);
     expect(record(p => drawResults(p, todayRows(m), true, P.results)).length).toBeGreaterThan(record(p => drawResults(p, todayRows(m), false, P.results)).length);
+  });
+});
+
+describe('lost sales by type', () => {
+  test('a row per type with the count and money lost, and the announcement says it too', () => {
+    const m = compare(1, DEFAULT_PARAMS).today.metrics;
+    const rows = lostByTypeRows(m);
+    expect(rows.map(r => r.label)).toEqual(['LOST ADVICE', 'LOST SAMPLES', 'LOST SMALL']);
+    expect(rows.map(r => r.values[0])).toEqual(WALK_IN_KINDS.map(k => `${m.lostByType[k].count} ${formatGbp(m.lostByType[k].gbp)}`));
+    expect(todayRows(m).slice(-3)).toEqual(rows);
+    expect(resultsAnnouncement(m)).toContain('Lost by type:');
+    for (const r of rows) noOverlap(r);
+  });
+
+  test('the longer list still fits above the text box', () => {
+    const m = compare(1, busy).today.metrics;
+    const calls = record(p => drawResults(p, todayRows(m), false, P.results));
+    inScreen(calls);
+    for (const [, y, , h] of calls.slice(1)) if (y < TEXTBOX.y) expect(y + h).toBeLessThanOrEqual(TEXTBOX.y);
   });
 });

@@ -3,7 +3,7 @@ import {join} from 'path';
 
 import {describe, expect, test} from 'bun:test';
 
-import type {Arrivals, MixOrderArrival} from './arrivals';
+import type {Arrivals, MixOrderArrival, WalkInArrival} from './arrivals';
 import {drawArrivals} from './arrivals';
 import {autoplay, compare, runScenario} from './engine';
 import type {TinSize} from './params';
@@ -82,27 +82,29 @@ describe('hub scenario', () => {
   });
 });
 
+const walkIn = (id: number, at: number): WalkInArrival => ({id, at, kind: 'small', valueGbp: 95});
+
 describe('walk-ins', () => {
   test('a walk-in who waits past patience is lost at the average sale; one served in time is not', () => {
-    const arrivals: Arrivals = {walkIns: [{id: 0, at: 0}, {id: 1, at: 1}, {id: 2, at: 2}, {id: 3, at: 3}], mixOrders: []};
+    const arrivals: Arrivals = {walkIns: [walkIn(0, 0), walkIn(1, 1), walkIn(2, 2), walkIn(3, 3)], mixOrders: []};
     const params = withParams({serviceMinutes: 4, patienceMinutes: 10});
     const {timeline, metrics} = runScenario('today', arrivals, params);
     expect(metrics.walkInsLost).toBe(0);
     const tight = runScenario('today', arrivals, withParams({serviceMinutes: 4, patienceMinutes: 5}));
     expect(ofType(tight.timeline, 'walk-in-served').map(e => e.walkIn)).toEqual([0, 1, 3]);
-    expect(ofType(tight.timeline, 'walk-in-lost')).toEqual([{type: 'walk-in-lost', at: 7, walkIn: 2, saleGbp: 95}]);
+    expect(ofType(tight.timeline, 'walk-in-lost')).toEqual([{type: 'walk-in-lost', at: 7, walkIn: 2, kind: 'small', saleGbp: 95}]);
     expect(tight.metrics).toMatchObject({walkInsServed: 3, walkInsLost: 1, salesLostGbp: 95});
     expect(ofType(timeline, 'walk-in-served')).toHaveLength(4);
   });
 
   test('a walk-in served exactly at the patience limit is not lost', () => {
-    const arrivals: Arrivals = {walkIns: [{id: 0, at: 0}, {id: 1, at: 0}], mixOrders: []};
+    const arrivals: Arrivals = {walkIns: [walkIn(0, 0), walkIn(1, 0)], mixOrders: []};
     const {metrics} = runScenario('today', arrivals, withParams({serviceMinutes: 10, patienceMinutes: 10}));
     expect(metrics).toMatchObject({walkInsServed: 2, walkInsLost: 0});
   });
 
   test('with one staff member mixing, a walk-in arriving during the mix finds the floor empty', () => {
-    const arrivals: Arrivals = {walkIns: [{id: 0, at: 4}], mixOrders: [order(0, 0, 3)]};
+    const arrivals: Arrivals = {walkIns: [walkIn(0, 4)], mixOrders: [order(0, 0, 3)]};
     const {timeline, metrics} = runScenario('today', arrivals, withParams({staff: 1, patienceMinutes: 10}));
     const [arrive] = ofType(timeline, 'walk-in-arrive');
     expect(arrive).toMatchObject({freeStaff: 0, staffOnFloor: 0});
@@ -110,7 +112,7 @@ describe('walk-ins', () => {
   });
 
   test('a second staff member serves the walk-in while the first mixes', () => {
-    const arrivals: Arrivals = {walkIns: [{id: 0, at: 5}], mixOrders: [order(0, 0, 3)]};
+    const arrivals: Arrivals = {walkIns: [walkIn(0, 5)], mixOrders: [order(0, 0, 3)]};
     const {timeline, metrics} = runScenario('today', arrivals, withParams({staff: 2}));
     expect(ofType(timeline, 'walk-in-arrive')[0]).toMatchObject({freeStaff: 1, staffOnFloor: 1});
     expect(metrics.walkInsServed).toBe(1);
@@ -124,7 +126,8 @@ describe('metrics', () => {
       const {today, hub} = compare(seed, DEFAULT_PARAMS);
       for (const m of [today.metrics, hub.metrics]) {
         expect(m.walkInsServed + m.walkInsLost).toBe(m.walkIns);
-        expect(m.salesLostGbp).toBe(m.walkInsLost * DEFAULT_PARAMS.averageSaleGbp);
+        expect(m.salesLostGbp).toBe(Object.values(m.lostByType).reduce((sum, t) => sum + t.gbp, 0));
+        expect(Object.values(m.lostByType).reduce((sum, t) => sum + t.count, 0)).toBe(m.walkInsLost);
         expect(m.ordersMixedInStore + m.ordersSentToHub).toBe(m.mixOrders);
       }
       saved += today.metrics.salesLostGbp - hub.metrics.salesLostGbp;
@@ -152,8 +155,8 @@ describe('decision policy', () => {
   // One member of staff is busy until a walk-in and a mix order are both waiting, so the pick matters.
   const arrivals: Arrivals = {
     walkIns: [
-      {id: 1, at: 0},
-      {id: 2, at: 1},
+      walkIn(1, 0),
+      walkIn(2, 1),
     ],
     mixOrders: [order(1, 2, 2)],
   };

@@ -41,7 +41,7 @@ describe('style frame', () => {
     const view = styleFrame('dilemma', DEFAULT_PARAMS);
     expect(view.bubble).toBe(BUBBLE);
     expect(BUBBLE).toBe(`${ORDER_TINS} TINS`);
-    expect(view.state.serving).toEqual([{walkIn: TRADE_WALK_IN, staff: 0}]);
+    expect(view.state.serving).toEqual([{walkIn: TRADE_WALK_IN, kind: 'advice', staff: 0}]);
     expect(customerSprite(TRADE_WALK_IN)).toBe(TRADE);
     expect(view.state.waiting).toHaveLength(3);
     const used = view.state.waiting.map(w => (view.state.minute - w.since) / DEFAULT_PARAMS.patienceMinutes);

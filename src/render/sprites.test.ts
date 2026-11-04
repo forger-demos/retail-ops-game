@@ -3,7 +3,8 @@ import {describe, expect, test} from 'bun:test';
 import {SPRITE_KEYS} from './palette';
 import {shadeOf, SpriteKeyError, TIN} from './sprite';
 import * as sprites from './sprites';
-import {CUSTOMERS, customerSprite, PERSON_H, PERSON_W, STAFF} from './sprites';
+import {BUBBLE_H, BUBBLE_W, CUSTOMERS, customerSprite, PERSON_H, PERSON_W, STAFF, walkInSprite, WALK_IN_BUBBLES} from './sprites';
+import {WALK_IN_KINDS} from '../sim/params';
 
 const all = Object.entries({...sprites, TIN}).filter((e): e is [string, readonly string[]] => Array.isArray(e[1]) && typeof e[1][0] === 'string');
 
@@ -33,5 +34,16 @@ describe('sprites', () => {
   test('an unknown key is an error, not a silent colour', () => {
     expect(shadeOf('f')).toBe(15);
     expect(() => shadeOf('z')).toThrow(SpriteKeyError);
+  });
+
+  test('each walk-in type has its own bubble and its own people, none in the staff look', () => {
+    const bubbles = WALK_IN_KINDS.map(k => WALK_IN_BUBBLES[k]);
+    for (const b of bubbles) expect([b.length, b[0]?.length]).toEqual([BUBBLE_H, BUBBLE_W]);
+    expect(new Set(bubbles.map(b => b.join('/'))).size).toBe(WALK_IN_KINDS.length);
+    const looks = WALK_IN_KINDS.map(k => new Set([0, 1, 2, 3].map(i => walkInSprite(k, i).join('/'))));
+    const everyLook = looks.flatMap(l => [...l]);
+    expect(new Set(everyLook).size).toBe(everyLook.length);
+    expect(everyLook).not.toContain(STAFF.join('/'));
+    for (const k of WALK_IN_KINDS) expect(walkInSprite(k, 7)).toBe(walkInSprite(k, 7));
   });
 });

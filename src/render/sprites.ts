@@ -1,5 +1,6 @@
 import {C, SPRITE_KEYS, type Shade} from './palette';
 import type {Sprite} from './sprite';
+import type {WalkInKind} from '../sim/params';
 
 // Every sprite here was drawn for this project. Rows are palette keys, '.' is transparent.
 
@@ -56,6 +57,28 @@ export function customerSprite(walkIn: number): Sprite {
   const n = CUSTOMERS.length;
   return CUSTOMERS[((walkIn % n) + n) % n] ?? TRADE;
 }
+
+/** Walk-ins by what they came for; each type has its own looks so the queue reads at a glance. */
+const WALK_IN_LOOKS: Record<WalkInKind, readonly Sprite[]> = {
+  advice: [CUSTOMERS[1] ?? TRADE, person('bun', 'dress', {H: C.plum, K: C.skin, S: C.teal})],
+  sample: [CUSTOMERS[2] ?? TRADE, person('cap', 'plain', {X: C.blue, Y: C.sky, K: C.tan, S: C.yellow, P: C.slate})],
+  small: [CUSTOMERS[3] ?? TRADE, person('short', 'coat', {H: C.brown, K: C.skin, S: C.forest, A: C.leaf, P: C.plum}), CUSTOMERS[4] ?? TRADE],
+};
+
+export function walkInSprite(kind: WalkInKind, walkIn: number): Sprite {
+  const looks = WALK_IN_LOOKS[kind];
+  return looks[((walkIn % looks.length) + looks.length) % looks.length] ?? TRADE;
+}
+
+export const BUBBLE_W = 9;
+export const BUBBLE_H = 9;
+
+/** What a waiting walk-in is thinking of: a question mark, a paint pot, a coin. */
+export const WALK_IN_BUBBLES: Record<WalkInKind, Sprite> = {
+  advice: ['.0000000.', '033333330', '033999330', '039333930', '033339330', '033393330', '033333330', '033393330', '.0000000.'],
+  sample: ['.0000000.', '033333330', '033000330', '030444030', '030444030', '030444030', '033000330', '033333330', '.0000000.'],
+  small: ['.0000000.', '033333330', '033666330', '036000630', '036066630', '036000630', '033666330', '033333330', '.0000000.'],
+};
 
 /** The speech bubble a walk-in shows as they give up. */
 export const BANG: Sprite = ['.00000.', '0333330', '0334330', '0334330', '0334330', '0333330', '0334330', '.00000.', '..00...'];

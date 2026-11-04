@@ -2,7 +2,8 @@ import type {Arrivals, MixOrderArrival, WalkInArrival} from './arrivals';
 import {drawArrivals} from './arrivals';
 import type {Metrics} from './metrics';
 import {summarise} from './metrics';
-import type {Params, ScenarioName, TinSize} from './params';
+import type {Params, ScenarioName, TinSize, WalkInKind} from './params';
+import {walkInType} from './params';
 import type {TimelineEvent} from './timeline';
 
 /** What the player can press. Each one is a decision of the round's policy, made at a shop minute. */
@@ -23,6 +24,8 @@ export const OPENING_ORDER_TINS = 10;
 const OPENING_TIN: TinSize = '5L';
 /** Shop minutes at which the scripted walk-ins join the queue behind the trade order. */
 export const OPENING_WALK_INS: readonly number[] = [1, 3];
+/** Who the scripted walk-ins are: a quick buy, then someone who wants colour advice. */
+export const OPENING_WALK_IN_KINDS: readonly WalkInKind[] = ['small', 'advice'];
 /** The opening order's id; walk-in ids start at 1, so the trade look of customer 0 is only ever the trade customer's. */
 export const OPENING_ORDER = 0;
 
@@ -47,10 +50,14 @@ export function roundArrivals(seed: number, params: Params, minutes: number): Ar
   const drawn = drawArrivals(seed, {...params, shiftMinutes: minutes});
   const tins: TinSize[] = Array.from({length: OPENING_ORDER_TINS}, () => OPENING_TIN);
   const opening: MixOrderArrival = {id: OPENING_ORDER, at: 0, tins, valueGbp: OPENING_ORDER_TINS * params.tinPricesGbp[OPENING_TIN]};
-  const walkIns = [...OPENING_WALK_INS.map(at => ({at})), ...drawn.walkIns]
+  const openingWalkIns = OPENING_WALK_INS.map((at, i) => {
+    const kind = OPENING_WALK_IN_KINDS[i % OPENING_WALK_IN_KINDS.length] ?? 'small';
+    return {at, kind, valueGbp: walkInType(params, kind).valueGbp};
+  });
+  const walkIns = [...openingWalkIns, ...drawn.walkIns]
     .filter(w => w.at < minutes)
     .sort((a, b) => a.at - b.at)
-    .map((w, i): WalkInArrival => ({id: i + 1, at: w.at}));
+    .map((w, i): WalkInArrival => ({id: i + 1, at: w.at, kind: w.kind, valueGbp: w.valueGbp}));
   const mixOrders = [opening, ...drawn.mixOrders.map(o => ({...o, id: o.id + 1}))];
   return {walkIns, mixOrders};
 }
@@ -147,7 +154,7 @@ function simulate(round: Round, commands: readonly Command[], until: number): Si
       case RANK.walkIn:
         if (!walkIn) break;
         w++;
-        timeline.push({type: 'walk-in-arrive', at, walkIn: walkIn.id, freeStaff: activity === 'idle' ? 1 : 0, staffOnFloor: activity === 'mixing' ? 0 : 1});
+        timeline.push({type: 'walk-in-arrive', at, walkIn: walkIn.id, kind: walkIn.kind, freeStaff: activity === 'idle' ? 1 : 0, staffOnFloor: activity === 'mixing' ? 0 : 1});
         waitingWalkIns.push(walkIn);
         break;
       case RANK.press: {
@@ -158,7 +165,7 @@ function simulate(round: Round, commands: readonly Command[], until: number): Si
           if (!served) break;
           freeAt = at + params.serviceMinutes;
           activity = 'serving';
-          timeline.push({type: 'walk-in-served', at, walkIn: served.id, staff: 0, until: freeAt});
+          timeline.push({type: 'walk-in-served', at, walkIn: served.id, kind: served.kind, staff: 0, until: freeAt});
           break;
         }
         const taken = waitingOrders.shift();
@@ -176,7 +183,7 @@ function simulate(round: Round, commands: readonly Command[], until: number): Si
       case RANK.abandon:
         if (!giveUp) break;
         waitingWalkIns.shift();
-        timeline.push({type: 'walk-in-lost', at, walkIn: giveUp.id, saleGbp: params.averageSaleGbp});
+        timeline.push({type: 'walk-in-lost', at, walkIn: giveUp.id, kind: giveUp.kind, saleGbp: giveUp.valueGbp});
         break;
     }
   }
@@ -222,7 +229,10 @@ export function playRound(round: Round, commands: readonly Command[]): PlayedRou
   const metrics = summarise(s.timeline);
   let unmannedMinutes = 0;
   for (const e of s.timeline) if (e.type === 'mix-start') unmannedMinutes += Math.min(e.until, round.minutes) - e.at;
-  const capturedGbp = metrics.walkInsServed * round.params.averageSaleGbp + s.captured.reduce((sum, order) => sum + order.valueGbp, 0);
+  const valueOf = new Map(round.arrivals.walkIns.map(w => [w.id, w.valueGbp]));
+  let servedGbp = 0;
+  for (const e of s.timeline) if (e.type === 'walk-in-served') servedGbp += valueOf.get(e.walkIn) ?? 0;
+  const capturedGbp = servedGbp + s.captured.reduce((sum, order) => sum + order.valueGbp, 0);
   return {
     timeline: s.timeline,
     result: {
