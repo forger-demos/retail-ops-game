@@ -1,0 +1,12 @@
+.forger/state.json
+.forger/work.log
+.forger/output/
+.forger/HALT
+.forger/runner.lock
+.forger/events.jsonl
+.forger/declined.json
+.forger/verdicts/
+node_modules/
+dist/
+test-results/
+playwright-report/

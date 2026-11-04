@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shop scene wireframe</title>
+  <link rel="stylesheet" href="../wireframe.css">
+</head>
+<body>
+  <main class="wf-screen">
+    <h1>Shop scene (autoplay)</h1>
+    <p class="wf-note">One fixed 160x144 Game Boy screen, scaled up by whole pixels and centred; letterboxed on wide or tall displays. Top-down view.</p>
+    <div class="wf-box"><h2>Status bar</h2><p>Scenario name ("TODAY" or "WITH CENTRAL HUB") - shop clock 09:00 to 17:00 - served / lost counters - lost GBP so far.</p></div>
+    <div class="wf-row">
+      <div class="wf-col">
+        <div class="wf-box"><h2>Shop floor</h2><p>Door, aisles, counter. Customers walk in, queue at the counter, show a wait meter. At the patience limit an "!" bubble appears and they walk out; a "-GBP95" pops.</p></div>
+        <div class="wf-image"></div>
+      </div>
+      <div class="wf-col">
+        <div class="wf-box"><h2>Mixing room</h2><p>Behind a wall. Staff who take a mix order walk here; a tin-progress bar fills per tin ("TIN 3/8"). The floor visibly empties.</p></div>
+        <div class="wf-box"><h2>Loading bay (fix run only)</h2><p>Orders over 5 tins are sent off: a van drives away with "2H DELIVERY".</p></div>
+      </div>
+    </div>
+    <div class="wf-box"><h2>Text box</h2><p>Pokemon-style dialogue box at the bottom for narration beats: "A customer wants 8 tins mixed!", "Nobody on the floor...", "Customer left!". Autoplay advances on its own; SPACE skips ahead.</p></div>
+    <div class="wf-state"><h3>Empty</h3><p>Shop opens at 09:00 with no customers; staff stand at the counter.</p></div>
+    <div class="wf-state"><h3>Loading</h3><p>None needed - assets are inlined; the first frame is the shop at opening.</p></div>
+    <div class="wf-state"><h3>Failed</h3><p>Canvas unsupported: plain text "This demo needs a modern browser" plus the results as text.</p></div>
+    <div class="wf-state"><h3>Full</h3><p>Queue at the counter is capped visually at its slots; extra waiting customers stand by the door, still counted.</p></div>
+  </main>
+</body>
+</html>
