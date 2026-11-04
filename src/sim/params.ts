@@ -22,7 +22,7 @@ export interface Params {
   minutesPerTin: number;
   orderSizeMix: readonly OrderSizeBand[];
   tinPricesGbp: Readonly<Record<TinSize, number>>;
-  /** Weight of each tin size when a tin is drawn; the plan leaves the split open, so it starts even. */
+  /** Weight of each tin size when a tin is drawn; the default split puts the average tin near GBP95. */
   tinSizeMix: Readonly<Record<TinSize, number>>;
   /** Orders with more tins than this go to the hub in the `hub` scenario. */
   hubThresholdTins: number;
@@ -45,7 +45,7 @@ export const DEFAULT_PARAMS: Params = {
     {minTins: 6, maxTins: 12, share: 0.08},
   ],
   tinPricesGbp: {'750ml': 45, '2.5L': 85, '5L': 120},
-  tinSizeMix: {'750ml': 1, '2.5L': 1, '5L': 1},
+  tinSizeMix: {'750ml': 15, '2.5L': 40, '5L': 45},
   hubThresholdTins: 5,
   hubDeliveryMinutes: 120,
 };
