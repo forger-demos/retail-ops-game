@@ -8,6 +8,11 @@ export interface Prompts {
   settingsHint: string;
   /** How a sentence tells the listener to advance, for the canvas labels. */
   verb: string;
+  /** The text box while the shift waits for the presenter's pick. */
+  decision: string;
+  /** Said once when take-control is switched on or off. */
+  controlOn: string;
+  controlOff: string;
 }
 
 const PROMPTS: Readonly<Record<InputMode, Prompts>> = {
@@ -17,6 +22,9 @@ const PROMPTS: Readonly<Record<InputMode, Prompts>> = {
     comparison: 'SPACE: REPLAY THIS DAY. R: RESHUFFLE THE DAY.',
     settingsHint: 'S: SETTINGS',
     verb: 'Press space',
+    decision: 'W: SERVE THE WALK-IN. O: MIX THE ORDER.',
+    controlOn: 'YOU DECIDE WHO IS NEXT. C: BACK TO AUTOPLAY.',
+    controlOff: 'AUTOPLAY. C: TAKE CONTROL.',
   },
   touch: {
     title: 'TAP TO START',
@@ -24,6 +32,9 @@ const PROMPTS: Readonly<Record<InputMode, Prompts>> = {
     comparison: 'TAP: REPLAY THIS DAY. OR USE RESHUFFLE.',
     settingsHint: '',
     verb: 'Tap',
+    decision: 'SERVE THE WALK-IN OR MIX THE ORDER?',
+    controlOn: 'YOU DECIDE WHO IS NEXT. TAP AUTOPLAY TO STOP.',
+    controlOff: 'AUTOPLAY. TAP TAKE CONTROL TO DECIDE.',
   },
 };
 

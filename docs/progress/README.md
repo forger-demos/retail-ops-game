@@ -17,3 +17,4 @@ Visual artefacts that have been superseded, kept in running order so this folder
 - `04-two-run-results-screenshots/` - the full screenshot set as `two-run-results` shipped it, archived when `tap-input` added the reshuffle button.
 - `05-settings-wireframe/` - the approved grey-box wireframe for the settings menu, archived when `settings` shipped.
 - `06-tap-input-screenshots/` - the full screenshot set as `tap-input` left it, archived when `settings` added the menu screen.
+- `07-settings-screenshots/` - the full screenshot set as `settings` left it, archived when `take-control` added the take-control button to the replay.
