@@ -1,6 +1,6 @@
 import type {TimelineEvent} from '../sim/timeline';
 
-export type SfxName = 'walk-in' | 'walkout' | 'tin-done' | 'van';
+export type SfxName = 'walk-in' | 'walkout' | 'tin-done' | 'van' | 'sale' | 'hum' | 'press' | 'refuse';
 
 interface Note {
   hz: number;
@@ -11,12 +11,16 @@ interface Note {
 
 const run = (hzs: readonly number[], seconds: number): readonly Note[] => hzs.map((hz, i) => ({hz, at: i * seconds, seconds}));
 
-/** Square-wave phrases written for this project: a door chime up, a sulk down, a blip, a van pulling away. */
+/** Square-wave phrases written for this project: a door chime up, a coin jingle down, a till chime, a low shaker hum, a van pulling away, a press blip and a refusal thud. */
 export const EFFECTS: Readonly<Record<SfxName, readonly Note[]>> = {
   'walk-in': run([660, 880], 0.07),
-  walkout: run([440, 330, 220], 0.09),
+  walkout: run([1175, 988, 784, 523], 0.06),
   'tin-done': run([988, 1319], 0.05),
   van: run([131, 165, 196, 262], 0.1),
+  sale: run([784, 1047, 1319], 0.06),
+  hum: run([98, 110, 98], 0.12),
+  press: run([523], 0.04),
+  refuse: run([196, 147], 0.06),
 };
 
 const VOLUME = 0.06;
@@ -25,7 +29,8 @@ export const MAX_PLAYBACK_STEP = 1;
 
 /**
  * The effects that fall in (from, to] shop minutes, in order. A tin is done each
- * time an equal share of its order's mix has elapsed; the van leaves at dispatch.
+ * time an equal share of its order's mix has elapsed, and the shaker hums as each begins;
+ * the till chimes when a walk-in is served; the van leaves at dispatch.
  */
 export function effectsBetween(timeline: readonly TimelineEvent[], from: number, to: number): SfxName[] {
   if (to <= from || to - from > MAX_PLAYBACK_STEP) return [];
@@ -41,11 +46,17 @@ export function effectsBetween(timeline: readonly TimelineEvent[], from: number,
       case 'walk-in-lost':
         hear(e.at, 'walkout');
         break;
+      case 'walk-in-served':
+        hear(e.at, 'sale');
+        break;
       case 'hub-dispatch':
         hear(e.at, 'van');
         break;
       case 'mix-start':
-        for (let tin = 1; tin <= e.tins; tin++) hear(e.at + ((e.until - e.at) * tin) / e.tins, 'tin-done');
+        for (let tin = 1; tin <= e.tins; tin++) {
+          hear(e.at + ((e.until - e.at) * (tin - 1)) / e.tins, 'hum');
+          hear(e.at + ((e.until - e.at) * tin) / e.tins, 'tin-done');
+        }
         break;
       default:
         break;

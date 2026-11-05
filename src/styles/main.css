@@ -198,6 +198,45 @@ body[data-step='settings'] #increase {
   background: var(--px-pink);
 }
 
+.bezel-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* On the console frame, in the bezel, so it never floats over the screen or outside the shell. */
+#sound {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 2px solid var(--px-ink);
+  border-radius: 8px;
+  background: var(--button-a);
+  box-shadow: 0 3px 0 var(--px-ink);
+  color: var(--px-cream);
+  font: bold 10px/1 monospace;
+  letter-spacing: 1px;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+#sound[aria-pressed='true'] {
+  background: var(--px-leaf);
+  color: var(--px-ink);
+}
+
+#sound:active {
+  box-shadow: none;
+  background: var(--px-yellow);
+  color: var(--px-ink);
+}
+
+#sound:focus-visible {
+  outline: 3px solid var(--px-yellow);
+  outline-offset: 2px;
+}
+
 .brand {
   overflow: hidden;
   white-space: nowrap;
@@ -324,11 +363,19 @@ body[data-scene='play'] .ab {
   min-height: 9px;
 }
 
-.actions button:active {
+.actions button:active,
+.actions button.pressed {
   background: var(--px-yellow);
   color: var(--px-ink);
   box-shadow: none;
-  transform: translateY(3px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .actions button:active,
+  .actions button.pressed,
+  #sound:active {
+    transform: translateY(3px);
+  }
 }
 
 .actions button:focus-visible {

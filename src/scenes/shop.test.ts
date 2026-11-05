@@ -6,12 +6,12 @@ import {replayState, type ReplayState, type StaffView} from '../render/replay';
 import {SCREEN_HEIGHT, SCREEN_WIDTH} from '../render/screen-size';
 import {compare} from '../sim/engine';
 import {DEFAULT_PARAMS, type ScenarioName} from '../sim/params';
-import {BAY, DOOR_SPOT, drawShop, FLOOR, inside, LOSS_MINUTES, QUEUE_SLOTS, type Rect, staffPosition, SPEAKER, VAN_MINUTES, WALK_MINUTES} from './shop';
+import {BAY, DOOR_SPOT, drawShop, FLOOR, inside, LOSS_MINUTES, QUEUE_SLOTS, type Rect, type ShopView, staffPosition, SPEAKER, VAN_MINUTES, WALK_MINUTES} from './shop';
 
 const UNDRAWN = 255;
 
 /** Renders into a shade buffer, failing on any plot outside the screen or outside the palette. */
-function render(state: ReplayState, scenario: ScenarioName = 'today', text = 'HELLO', sound = false): Uint8Array {
+function render(state: ReplayState, scenario: ScenarioName = 'today', text = 'HELLO', sound = false, extra: Partial<ShopView> = {}): Uint8Array {
   const buf = new Uint8Array(SCREEN_WIDTH * SCREEN_HEIGHT).fill(UNDRAWN);
   const plot: Plot = (x, y, w, h, shade) => {
     if (x < 0 || y < 0 || x + w > SCREEN_WIDTH || y + h > SCREEN_HEIGHT || !isShade(shade)) {
@@ -19,7 +19,7 @@ function render(state: ReplayState, scenario: ScenarioName = 'today', text = 'HE
     }
     for (let yy = y; yy < y + h; yy++) buf.fill(shade, yy * SCREEN_WIDTH + x, yy * SCREEN_WIDTH + x + w);
   };
-  drawShop(plot, {scenario, state, params: DEFAULT_PARAMS, text, chars: text.length, sound});
+  drawShop(plot, {scenario, state, params: DEFAULT_PARAMS, text, chars: text.length, sound, ...extra});
   return buf;
 }
 
@@ -40,8 +40,60 @@ const base = (over: Partial<ReplayState> = {}): ReplayState => ({
   waiting: [],
   serving: [],
   losses: [],
+  sales: [],
   dispatches: [],
   ...over,
+});
+
+describe('juice', () => {
+  const lossAt = (): {state: ReplayState; at: number} => {
+    const run = compare(1, DEFAULT_PARAMS).today;
+    const loss = run.timeline.find(e => e.type === 'walk-in-lost');
+    if (!loss) throw new Error('the seed has no walk-out');
+    return {state: replayState(run.timeline, DEFAULT_PARAMS.staff, DEFAULT_PARAMS.shiftMinutes, loss.at), at: loss.at};
+  };
+
+  test('a walk-out flashes the floor red, and reduced motion turns the flash off', () => {
+    const {state} = lossAt();
+    const flashing = region(render(state), FLOOR);
+    const calm = region(render(state, 'today', 'HELLO', false, {calm: true}), FLOOR);
+    expect(flashing).not.toEqual(calm);
+  });
+
+  test('the walk-out still shows its -GBP pop when motion is reduced', () => {
+    const {state} = lossAt();
+    const withLoss = region(render(state, 'today', 'HELLO', false, {calm: true}), FLOOR);
+    const without = region(render({...state, losses: []}, 'today', 'HELLO', false, {calm: true}), FLOOR);
+    expect(withLoss).not.toEqual(without);
+  });
+
+  test('a sale floats a +GBP figure, and it shows with motion reduced', () => {
+    const run = compare(1, DEFAULT_PARAMS).today;
+    const served = run.timeline.find(e => e.type === 'walk-in-served');
+    if (!served) throw new Error('the seed serves nobody');
+    const state = replayState(run.timeline, DEFAULT_PARAMS.staff, DEFAULT_PARAMS.shiftMinutes, served.at + 0.5);
+    for (const calm of [false, true]) {
+      expect(region(render(state, 'today', 'HELLO', false, {calm}), FLOOR)).not.toEqual(region(render({...state, sales: []}, 'today', 'HELLO', false, {calm}), FLOOR));
+    }
+  });
+
+  test('the shaker jitters while mixing, and holds still when motion is reduced', () => {
+    const mix = compare(1, DEFAULT_PARAMS).today.timeline.find(e => e.type === 'mix-start');
+    if (!mix) throw new Error('the seed has no mix');
+    const at = (minute: number): ReplayState => replayState(compare(1, DEFAULT_PARAMS).today.timeline, DEFAULT_PARAMS.staff, DEFAULT_PARAMS.shiftMinutes, minute);
+    const mixRoom = {x: 104, y: 20, w: 56, h: 14};
+    const frames = [0, 0.2].map(d => region(render(at(mix.at + 0.1 + d)), mixRoom));
+    expect(frames[0]).not.toEqual(frames[1]);
+    const still = [0, 0.2].map(d => region(render(at(mix.at + 0.1 + d), 'today', 'HELLO', false, {calm: true}), mixRoom));
+    expect(still[0]).toEqual(still[1]);
+  });
+
+  test('the dialogue arrow bounces, and holds still when motion is reduced', () => {
+    const state = base();
+    const arrow = {x: 140, y: 125, w: 14, h: 14};
+    expect(region(render(state, 'today', 'HI', false, {beat: 0}), arrow)).not.toEqual(region(render(state, 'today', 'HI', false, {beat: 300}), arrow));
+    expect(region(render(state, 'today', 'HI', false, {beat: 0, calm: true}), arrow)).toEqual(region(render(state, 'today', 'HI', false, {beat: 300, calm: true}), arrow));
+  });
 });
 
 describe('shop scene', () => {

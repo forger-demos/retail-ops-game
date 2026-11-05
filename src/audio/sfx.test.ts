@@ -16,11 +16,16 @@ const timeline: TimelineEvent[] = [
 describe('effectsBetween', () => {
   test('names an effect for each walk-in, walk-out, finished tin and van', () => {
     expect(effectsBetween(timeline, 0, 1)).toEqual(['walk-in']);
-    expect(effectsBetween(timeline, 1, 2)).toEqual([]);
-    expect(effectsBetween(timeline, 2, 3)).toEqual(['tin-done']);
+    expect(effectsBetween(timeline, 1, 2)).toEqual(['hum']);
+    expect(effectsBetween(timeline, 2, 3)).toEqual(['tin-done', 'hum']);
     expect(effectsBetween(timeline, 3, 4)).toEqual(['tin-done']);
     expect(effectsBetween(timeline, 4, 5)).toEqual(['walkout']);
     expect(effectsBetween(timeline, 5, 6)).toEqual(['van']);
+  });
+
+  test('chimes the till when a walk-in is served', () => {
+    const served: TimelineEvent[] = [{type: 'walk-in-served', at: 2, walkIn: 0, kind: 'small', staff: 0, until: 4}];
+    expect(effectsBetween(served, 1, 2)).toEqual(['sale']);
   });
 
   test('is silent for events at the start of the window, so a frame never repeats one', () => {

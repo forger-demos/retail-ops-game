@@ -56,6 +56,12 @@ export interface LossView {
   saleGbp: number;
 }
 
+export interface SaleView {
+  walkIn: number;
+  kind: WalkInKind;
+  at: number;
+}
+
 export interface DispatchView {
   order: number;
   at: number;
@@ -74,6 +80,8 @@ export interface ReplayState {
   waiting: readonly WaitingView[];
   serving: readonly ServingView[];
   losses: readonly LossView[];
+  /** Walk-ins served so far, in order, so the scene can float each sale. */
+  sales: readonly SaleView[];
   dispatches: readonly DispatchView[];
 }
 
@@ -89,6 +97,7 @@ export function replayState(timeline: readonly TimelineEvent[], staffCount: numb
   const waiting = new Map<number, WaitingView>();
   const serving = new Map<number, ServingView>();
   const losses: LossView[] = [];
+  const sales: SaleView[] = [];
   const dispatches: DispatchView[] = [];
   let served = 0;
   let lost = 0;
@@ -104,6 +113,7 @@ export function replayState(timeline: readonly TimelineEvent[], staffCount: numb
         waiting.delete(e.walkIn);
         serving.set(e.staff, {walkIn: e.walkIn, kind: e.kind, staff: e.staff});
         served++;
+        sales.push({walkIn: e.walkIn, kind: e.kind, at: e.at});
         const s = staff[e.staff];
         if (s) {
           s.activity = 'serving';
@@ -164,6 +174,7 @@ export function replayState(timeline: readonly TimelineEvent[], staffCount: numb
     waiting: [...waiting.values()],
     serving: [...serving.values()],
     losses,
+    sales,
     dispatches,
   };
 }

@@ -24,7 +24,7 @@ function queue(first: number, minute: number, patience: number, frontShare: numb
  */
 export function styleFrame(moment: StyleMoment, params: Params): Omit<ShopView, 'sound'> {
   const patience = params.patienceMinutes;
-  const base = {finished: false, served: 14, dispatches: []} as const;
+  const base = {finished: false, served: 14, sales: [], dispatches: []} as const;
   let state: ReplayState;
   if (moment === 'dilemma') {
     const minute = 134;
