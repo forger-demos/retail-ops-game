@@ -50,7 +50,7 @@ const audio = (page: Page): Promise<{contexts: number; notes: number; types: str
 test('sound is muted on load, and the sound button is finger-sized with a label that says the state', async ({page}) => {
   await spyOnAudio(page);
   await page.goto(PRESENTER);
-  const button = page.getByRole('button', {name: 'SOUND OFF'});
+  const button = page.getByRole('button', {name: 'SFX OFF'});
   const box = await button.boundingBox();
   expect(box?.width).toBeGreaterThanOrEqual(44);
   expect(box?.height).toBeGreaterThanOrEqual(44);
@@ -63,14 +63,14 @@ test('M and the button unmute, and the replay then plays synthesised square-wave
   await spyOnAudio(page);
   await page.goto(PRESENTER);
   await page.keyboard.press('KeyM');
-  await expect(page.getByRole('button', {name: 'SOUND ON'})).toBeVisible();
+  await expect(page.getByRole('button', {name: 'SFX ON'})).toBeVisible();
   await expect(page.locator('#prompt')).toHaveText('Sound on.');
   await page.keyboard.press('Space');
   await expect.poll(async () => (await audio(page)).notes, {timeout: 15000}).toBeGreaterThan(0);
   expect((await audio(page)).types.every(t => t === 'square')).toBe(true);
 
-  await page.getByRole('button', {name: 'SOUND ON'}).click();
-  await expect(page.getByRole('button', {name: 'SOUND OFF'})).toBeVisible();
+  await page.getByRole('button', {name: 'SFX ON'}).click();
+  await expect(page.getByRole('button', {name: 'SFX OFF'})).toBeVisible();
   const heard = (await audio(page)).notes;
   await page.waitForTimeout(1500);
   expect((await audio(page)).notes).toBe(heard);
@@ -82,4 +82,16 @@ test('a muted replay makes no sound', async ({page}) => {
   await page.keyboard.press('Space');
   await page.waitForTimeout(3000);
   expect(await audio(page)).toMatchObject({contexts: 0, notes: 0});
+});
+
+test('the SFX button sits on the console frame, inside the shell', async ({page}) => {
+  await page.goto(PRESENTER);
+  const shell = await page.locator('.console').boundingBox();
+  const button = await page.getByRole('button', {name: 'SFX OFF'}).boundingBox();
+  const screen = await page.locator('#screen').boundingBox();
+  if (!shell || !button || !screen) throw new Error('console, button or screen is missing');
+  expect(button.x).toBeGreaterThanOrEqual(shell.x);
+  expect(button.y + button.height).toBeLessThanOrEqual(shell.y + shell.height);
+  expect(button.x + button.width).toBeLessThanOrEqual(shell.x + shell.width);
+  expect(button.y).toBeGreaterThanOrEqual(screen.y + screen.height);
 });

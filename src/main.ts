@@ -52,6 +52,8 @@ const playButtonEls: Readonly<Record<PlayAction, HTMLButtonElement>> = {serve: b
 const DECISION_MS = 6000;
 /** Real milliseconds a refused press's reason stays in the live region, long enough to be read out. */
 const REFUSAL_MS = 2500;
+/** Real milliseconds a pressed action button stays down, so a key press shows on it too. */
+const PRESS_MS = 140;
 const buttons = {
   open: button('open-settings'),
   decrease: button('decrease'),
@@ -183,8 +185,7 @@ if (screen) {
 
   const syncControls = (): void => {
     const inMenu = flow.step === 'settings';
-    soundButton.hidden = inMenu;
-    soundButton.textContent = sfx.on ? 'SOUND ON' : 'SOUND OFF';
+    soundButton.textContent = sfx.on ? 'SFX ON' : 'SFX OFF';
     buttons.open.hidden = flow.step !== 'title';
     for (const b of [buttons.decrease, buttons.increase, buttons.reset, buttons.back]) b.hidden = !inMenu;
     reshuffleButton.hidden = flow.step !== 'comparison' && !inMenu;
@@ -278,7 +279,11 @@ if (screen) {
     if (!p) return false;
     const minute = roundMinute(p, now);
     const next = press(p.round, p.commands, action, minute);
+    const el = playButtonEls[action];
+    el.classList.add('pressed');
+    setTimeout(() => el.classList.remove('pressed'), PRESS_MS);
     if (next.reason !== null) {
+      sfx.play('refuse');
       const shown = syncPlayButtons(p, minute).find(b => b.action === action);
       if (shown) {
         announce(refusal(shown));
@@ -286,6 +291,7 @@ if (screen) {
       }
       return shown !== undefined;
     }
+    sfx.play('press');
     playing = {...p, commands: next.commands, played: playRound(p.round, next.commands)};
     return true;
   };
@@ -373,7 +379,7 @@ if (screen) {
       heardTo = minute;
       syncPlayButtons(playing, minute);
       if (now >= refusedUntil) announce(view.text);
-      drawShop(s.rect, view);
+      drawShop(s.rect, {...view, calm: reducedMotion.matches, beat: now});
     } else if (roundResultOf(flow.step)) {
       const n = roundResultOf(flow.step) ?? 1;
       drawResults(s.rect, roundRows(n, resultFor(n)), false, prompts.round1Result, RESULT_TITLES[n]);
@@ -387,7 +393,7 @@ if (screen) {
       announce(text);
       for (const name of effectsBetween(day[scenario].timeline, heardTo, state.minute)) sfx.play(name);
       heardTo = state.minute;
-      drawShop(s.rect, {scenario, state, params, text, chars, sound: sfx.on});
+      drawShop(s.rect, {scenario, state, params, text, chars, sound: sfx.on, calm: reducedMotion.matches, beat: now});
     }
   };
 
@@ -440,6 +446,7 @@ if (screen) {
     if (action === 'sound') {
       const wasOn = sfx.on;
       const isOn = sfx.toggle();
+      if (isOn) sfx.play('press');
       announce(isOn ? 'Sound on.' : wasOn ? 'Sound off.' : 'Sound stays off. This browser has no audio.');
       syncControls();
       return true;

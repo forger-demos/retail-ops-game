@@ -5,8 +5,9 @@ import {clockText, type ReplayState, staffOnFloor, type StaffView} from '../rend
 import {SCREEN_WIDTH} from '../render/screen-size';
 import {drawSprite, type Sprite} from '../render/sprite';
 import {BANG, BUBBLE_H, CRATE, customerSprite, PERSON_H, PERSON_W, PLANT, SHAKER, STAFF, TILL, TINTER, VAN, walkInSprite, WALK_IN_BUBBLES} from '../render/sprites';
+import {arrowLift, flashOn, SALE_MINUTES, wobble} from '../render/juice';
 import {drawTextbox} from '../render/textbox';
-import type {Params, ScenarioName} from '../sim/params';
+import {type Params, type ScenarioName, walkInType} from '../sim/params';
 
 export interface Rect {
   x: number;
@@ -95,6 +96,10 @@ export interface ShopView {
   title?: string;
   /** Replaces the wall clock in the status bar. */
   clock?: string;
+  /** Reduced motion: the jitter, shake, flash and bounce hold still; every figure and message still shows. */
+  calm?: boolean;
+  /** Real milliseconds on a free-running clock, for the dialogue arrow's bounce. */
+  beat?: number;
   /** A mix-order customer waiting at the till, with the tins they want in a speech bubble. */
   till?: {customer: number; tins: number};
 }
@@ -193,14 +198,16 @@ function drawFloor(plot: Plot): void {
   drawSprite(plot, PLANT, 2, 56);
 }
 
-function drawBackRooms(plot: Plot): void {
+function drawBackRooms(plot: Plot, view: ShopView): void {
   plot(WALL.x, WALL.y, WALL.w, WALL.h, C.ink);
   plot(WALL.x, DOORWAY.y, WALL.w, DOORWAY.h, C.mist);
   checker(plot, MIX_ROOM, 4, C.mist, C.slate);
   plot(MIX_ROOM.x, MIX_ROOM.y, MIX_ROOM.w, 14, C.sky);
   plot(MIX_ROOM.x, MIX_ROOM.y + 14, MIX_ROOM.w, 1, C.ink);
   drawSprite(plot, TINTER, MIX_ROOM.x + 3, MIX_ROOM.y + 1);
-  drawSprite(plot, SHAKER, MIX_ROOM.x + 37, MIX_ROOM.y + 1);
+  const mixing = view.state.staff.some(s => s.activity === 'mixing');
+  const jitter = mixing ? wobble(view.state.minute, 0.2, view.calm ?? false) : 0;
+  drawSprite(clip(plot, MIX_ROOM), SHAKER, MIX_ROOM.x + 37 + jitter, MIX_ROOM.y + 1);
   plot(BAY.x, MIX_ROOM.y + MIX_ROOM.h, BAY.w, BAY.y - MIX_ROOM.y - MIX_ROOM.h, C.ink);
   plot(BAY.x, BAY.y, BAY.w, BAY.h, C.slate);
 }
@@ -261,8 +268,9 @@ function drawStaff(plot: Plot, view: ShopView): void {
   else mixing.forEach((m, i) => label(`${m.tin}/${m.tins}`, MIX_ROOM.x + 2 + (i % 2) * 28, rowY(Math.floor(i / 2))));
 }
 
-function patienceBar(plot: Plot, p: Point, waited: number, patience: number): void {
+function patienceBar(plot: Plot, at: Point, waited: number, patience: number, minute: number, calm: boolean): void {
   const used = Math.min(1, patience > 0 ? waited / patience : 1);
+  const p = used >= PATIENCE_RED ? {x: at.x + wobble(minute, 0.2, calm), y: at.y} : at;
   plot(p.x, p.y - 4, PERSON_W, 3, C.ink);
   plot(p.x + 1, p.y - 3, PERSON_W - 2, 1, C.plum);
   plot(p.x + 1, p.y - 3, Math.max(1, Math.round((PERSON_W - 2) * (1 - used))), 1, patienceShade(used));
@@ -285,10 +293,24 @@ function drawCustomers(plot: Plot, view: ShopView): void {
     .forEach(({w, p}) => {
       person(plot, walkInSprite(w.kind, w.walkIn), p);
       drawSprite(plot, WALK_IN_BUBBLES[w.kind], p.x + 1, p.y - 5 - BUBBLE_H);
-      patienceBar(plot, p, state.minute - w.since, params.patienceMinutes);
+      patienceBar(plot, p, state.minute - w.since, params.patienceMinutes, state.minute, view.calm ?? false);
     });
 
   const floor = clip(plot, FLOOR);
+  const calm = view.calm ?? false;
+  for (const sale of state.sales) {
+    const t = (state.minute - sale.at) / SALE_MINUTES;
+    if (t < 0 || t >= 1) continue;
+    const pop = `+GBP${walkInType(params, sale.kind).valueGbp}`;
+    drawText(floor, pop, Math.max(2, servedSpot(0).x - 4), servedSpot(0).y - 8 - (calm ? 0 : Math.round(t * 4)), C.leaf);
+  }
+  const fresh = state.losses.at(-1);
+  if (fresh && flashOn(state.minute - fresh.at, calm)) {
+    plot(FLOOR.x, FLOOR.y, FLOOR.w, 2, C.red);
+    plot(FLOOR.x, FLOOR.y + FLOOR.h - 2, FLOOR.w, 2, C.red);
+    plot(FLOOR.x, FLOOR.y, 2, FLOOR.h, C.red);
+    plot(FLOOR.x + FLOOR.w - 2, FLOOR.y, 2, FLOOR.h, C.red);
+  }
   for (const loss of state.losses) {
     const t = (state.minute - loss.at) / LOSS_MINUTES;
     if (t < 0 || t >= 1) continue;
@@ -296,7 +318,7 @@ function drawCustomers(plot: Plot, view: ShopView): void {
     person(floor, walkInSprite(loss.kind, loss.walkIn), p);
     drawSprite(floor, BANG, p.x + 3, p.y - 10);
     const pop = `-GBP${loss.saleGbp}`;
-    drawText(floor, pop, Math.max(2, p.x - 4), WALK_OUT_Y - 18 - Math.round(t * 3), C.red);
+    drawText(floor, pop, Math.max(2, p.x - 4), WALK_OUT_Y - 18 - (calm ? 0 : Math.round(t * 3)), C.red);
   }
 }
 
@@ -334,12 +356,12 @@ function drawTill(plot: Plot, state: ReplayState, till: {customer: number; tins:
 export function drawShop(plot: Plot, view: ShopView): void {
   drawStatus(plot, view);
   drawFloor(plot);
-  drawBackRooms(plot);
+  drawBackRooms(plot, view);
   drawBay(plot, view);
   drawCustomers(plot, view);
   drawStaff(plot, view);
   if (view.till) drawTill(plot, view.state, view.till);
   if (staffOnFloor(view.state) === 0) drawBanner(plot);
   if (view.bubble) drawBubble(plot, view.bubble);
-  drawTextbox(plot, view.text, view.chars);
+  drawTextbox(plot, view.text, view.chars, view.beat === undefined ? null : arrowLift(view.beat, view.calm ?? false));
 }

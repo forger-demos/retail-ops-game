@@ -63,6 +63,6 @@ To open a step directly, for rehearsal, add `?scene=` to the URL: `play` for rou
 - `src/render/` - the screen, palette, font, sprites, the text box, and the pure replay state and narration derived from a timeline.
 - `src/scenes/` - what is drawn on each screen.
 - `src/flow/` - the order of the pitch, the deep links into it, the input actions that keys, taps and buttons share, and the settings model and its storage, all pure.
-- `src/audio/` - the sound effects: which timeline events make which effect, and the Web Audio player that synthesises them. Muted until M or the sound button; no audio files.
+- `src/audio/` - the sound effects: which timeline events make which effect, and the Web Audio player that synthesises them. Muted until M or the SFX button on the console; no audio files. `src/render/juice.ts` maps every action and event to its visual, motion and sound, and holds the motion that reduced motion turns off.
 - `src/styles/tokens.css` - the screen palette and the console's colours; the only file that writes a colour. `src/render/palette.ts` indexes the palette tokens, and sprites name each pixel by its palette key.
 - `docs/captures/` - short recordings of the demo running.

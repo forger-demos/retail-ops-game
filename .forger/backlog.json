@@ -298,7 +298,7 @@
     },
     "v2-juice": {
       "priority": "P1",
-      "status": "not_started",
+      "status": "completed",
       "type": "feature",
       "depends_on": [
         "v2-play-mode"
